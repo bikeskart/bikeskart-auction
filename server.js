@@ -8,6 +8,7 @@ const env = require("./src/config/env");
 const db = require("./src/config/db");
 const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
+const bikeRoutes = require("./src/routes/bikeRoutes");
 
 const app = express();
 
@@ -22,6 +23,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/bikes", bikeRoutes);
+
+// Uploaded bike photos/RC documents live in the persistent public_html area.
+app.use("/uploads", express.static(path.resolve(__dirname, "../public_html/uploads")));
 
 app.get("/health", (req, res) => res.json({ ok: true, service: "bikeskart-auction" }));
 app.get("/health/db", async (req, res, next) => {

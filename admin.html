@@ -24,7 +24,14 @@
 .admin-status{padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:#0b0f14;margin-top:18px}
 .admin-status strong{display:block;margin-bottom:6px}.admin-status p{margin:0;color:#9da5ae}
 </style>
-</head>
+
+<style>
+.admin-dashboard{width:min(1180px,100%)}
+.admin-dashboard .admin-card-wide{background:#11161c;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:26px;box-shadow:0 25px 70px rgba(0,0,0,.25)}
+.admin-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 22px}.admin-tab{background:#151a20;color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 15px;cursor:pointer}.admin-tab.active{background:linear-gradient(135deg,#e6392f,#ff6a00);border-color:transparent}
+.bike-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bike-field label{display:block;font-size:13px;font-weight:700;margin:0 0 8px}.bike-field input,.bike-field select,.bike-field textarea{width:100%;box-sizing:border-box;background:#0b0f14;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:13px 14px;outline:none}.bike-field textarea{min-height:110px;resize:vertical}.bike-field input:focus,.bike-field select:focus,.bike-field textarea:focus{border-color:#ff6548}.bike-field.full{grid-column:1/-1}.file-help{color:#89929c;font-size:12px;margin-top:6px}.bike-form-actions{display:flex;gap:10px;align-items:center;margin-top:20px}.bike-msg{color:#ff8a75;font-size:13px}.bike-list{margin-top:28px}.bike-row{display:grid;grid-template-columns:76px 1.5fr 1fr .8fr auto;gap:14px;align-items:center;padding:12px 0;border-top:1px solid rgba(255,255,255,.08)}.bike-thumb{width:76px;height:58px;border-radius:9px;object-fit:cover;background:#0b0f14}.bike-meta b{display:block}.bike-meta small{color:#89929c}.status-pill{display:inline-block;padding:6px 9px;border-radius:99px;background:#151a20;color:#cbd1d7;font-size:11px;text-transform:uppercase}.empty-state{color:#89929c;padding:20px 0}.admin-section-title{margin:0 0 6px;font-size:22px}.admin-section-lead{margin:0 0 20px;color:#89929c}.logout-top{white-space:nowrap}
+@media(max-width:760px){.bike-form-grid{grid-template-columns:1fr}.bike-field.full{grid-column:auto}.bike-row{grid-template-columns:58px 1fr}.bike-row> :nth-child(n+3){grid-column:2}.bike-thumb{width:58px;height:48px}}
+</style></head>
 <body>
 <header class="bk-header"><nav class="bk-nav">
 <a href="/" class="bk-logo"><img src="https://bikeskart.com/assets/images/bikeskart-logo-theme.png?v=1" alt="BikesKart"><span>AUCTION</span></a>
@@ -48,17 +55,36 @@
 </div>
 
 <div class="admin-panel" id="dashboardPanel">
+<div class="admin-dashboard">
 <div class="admin-top">
 <div>
 <div class="admin-brand"><img src="https://bikeskart.com/assets/images/bikeskart-logo-theme.png?v=1" alt="BikesKart"><span>AUCTION ADMIN</span></div>
 <h1>Admin Dashboard</h1>
 <p class="admin-user" id="adminUser"></p>
 </div>
-<div class="admin-actions"><button class="admin-secondary" id="logoutBtn">Logout</button></div>
+<div class="admin-actions"><button class="admin-secondary logout-top" id="logoutBtn">Logout</button></div>
 </div>
-<div class="admin-status">
-<strong>Admin access verified</strong>
-<p>Your admin account is authenticated and the protected admin API is responding. Auction management modules can be added here next.</p>
+<div class="admin-tabs"><button class="admin-tab active" type="button">Bikes</button><button class="admin-tab" type="button" disabled>Auctions — Next</button><button class="admin-tab" type="button" disabled>Bidders — Next</button></div>
+<div class="admin-card-wide">
+<h2 class="admin-section-title">Add Bike</h2>
+<p class="admin-section-lead">Create a draft bike listing. You can add it to an auction in the next stage.</p>
+<form id="bikeForm" enctype="multipart/form-data">
+<div class="bike-form-grid">
+<div class="bike-field"><label for="brand">Brand *</label><input id="brand" name="brand" required placeholder="Royal Enfield"></div>
+<div class="bike-field"><label for="model">Model *</label><input id="model" name="model" required placeholder="Classic 350"></div>
+<div class="bike-field"><label for="year">Year *</label><input id="year" name="year" type="number" min="1950" max="2100" required placeholder="2024"></div>
+<div class="bike-field"><label for="registrationNumber">Registration Number</label><input id="registrationNumber" name="registrationNumber" placeholder="KA01AB1234"></div>
+<div class="bike-field"><label for="kilometersDriven">Kilometres</label><input id="kilometersDriven" name="kilometersDriven" type="number" min="0" placeholder="12500"></div>
+<div class="bike-field"><label for="ownershipCount">Ownership Count</label><input id="ownershipCount" name="ownershipCount" type="number" min="1" max="255" placeholder="1"></div>
+<div class="bike-field"><label for="fuelType">Fuel Type</label><select id="fuelType" name="fuelType"><option value="">Select</option><option>Petrol</option><option>Electric</option><option>Other</option></select></div>
+<div class="bike-field"><label for="rcDocument">RC Document</label><input id="rcDocument" name="rcDocument" type="file" accept="application/pdf,image/jpeg,image/png,image/webp"><div class="file-help">PDF/JPG/PNG/WEBP · max 8 MB</div></div>
+<div class="bike-field full"><label for="bikePhotos">Bike Photos</label><input id="bikePhotos" name="bikePhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple><div class="file-help">Up to 8 photos · JPG/PNG/WEBP · max 8 MB each</div></div>
+<div class="bike-field full"><label for="conditionNotes">Condition Notes</label><textarea id="conditionNotes" name="conditionNotes" placeholder="Describe overall condition, service history, tyres, accessories, etc."></textarea></div>
+</div>
+<div class="bike-form-actions"><button class="main-btn" type="submit" id="saveBikeBtn">SAVE BIKE →</button><span class="bike-msg" id="bikeMsg"></span></div>
+</form>
+<div class="bike-list"><h2 class="admin-section-title">Recent Bikes</h2><div id="bikeList" class="empty-state">Loading…</div></div>
+</div>
 </div>
 </div>
 </section>
