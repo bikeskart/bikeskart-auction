@@ -1,6 +1,6 @@
 {
   "name": "bikeskart-auction",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "main": "server.js",
   "scripts": {
@@ -11,7 +11,9 @@
     "node": ">=18"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.3"
   }
 }
