@@ -1,22 +1,30 @@
-# BikesKart Auction
+# BikesKart Auction — Stage 1
 
-Initial Node.js/Express foundation for **auction.bikeskart.com**.
+Stage 1 adds secure authentication to the existing BikesKart Auction landing page.
 
-## Local run
+## Production configuration
 
-```bash
-npm install
-npm start
-```
+Hostinger already provides the database environment variables and `JWT_SECRET`.
+This package accepts the existing `JWT_SECRET`; separate JWT access/refresh secrets
+can be added later without changing the application code.
 
-Then open `http://localhost:3000`.
+Production CORS is configured for:
+`https://auction.bikeskart.com`
 
-## Hostinger
+The existing `bikeskart.com` website is not modified by this project.
 
-Use Node.js Web App deployment with:
-- Repository: `https://github.com/bikeskart/bikeskart-auction.git`
-- Branch: `main`
-- Build/install command: `npm install`
-- Start command: `npm start`
+## Stage 1 API
 
-The database, bidder accounts, admin panel, bike inventory, real-time bidding and payments will be added in later stages.
+- POST `/api/auth/register`
+- POST `/api/auth/login`
+- POST `/api/auth/refresh`
+- POST `/api/auth/logout`
+- GET `/api/auth/me`
+- GET `/api/admin/ping`
+- GET `/health`
+- GET `/health/db`
+
+Admins are created separately with:
+`node scripts/createAdmin.js "Full Name" "email@example.com" "Password123"`
+
+Do not upload `.env` or any secret values to GitHub.
