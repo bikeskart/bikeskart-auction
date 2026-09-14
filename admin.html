@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080b0f">
+<link rel="icon" href="https://bikeskart.com/assets/images/bikeskart-logo.svg">
+<title>BikesKart Auction | Admin Login</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+.admin-wrap{min-height:calc(100vh - 90px);display:grid;place-items:center;padding:70px 20px}
+.admin-card{width:min(520px,100%);background:#11161c;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:34px;box-shadow:0 25px 70px rgba(0,0,0,.35)}
+.admin-brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.admin-brand img{height:34px;width:auto}.admin-brand span{font-size:12px;letter-spacing:2px;color:#ff6548;font-weight:800}
+.admin-card h1{font-size:34px;margin:0 0 8px}.admin-card .lead{color:#9da5ae;margin:0 0 28px}
+.admin-form label{display:block;font-size:13px;font-weight:700;margin:0 0 8px}
+.admin-form input{width:100%;box-sizing:border-box;background:#0b0f14;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:14px 15px;margin-bottom:18px;outline:none}
+.admin-form input:focus{border-color:#ff6548;box-shadow:0 0 0 3px rgba(255,101,72,.1)}
+.admin-submit{width:100%;border:0;cursor:pointer}
+.admin-msg{min-height:20px;margin:8px 0 0;color:#ff8a75;font-size:13px}
+.admin-top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:28px}
+.admin-user{color:#9da5ae;font-size:14px}.admin-panel{display:none}.admin-panel.active{display:block}
+.admin-actions{display:flex;gap:10px;flex-wrap:wrap}.admin-secondary{background:#151a20;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 15px;cursor:pointer}
+.admin-status{padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:#0b0f14;margin-top:18px}
+.admin-status strong{display:block;margin-bottom:6px}.admin-status p{margin:0;color:#9da5ae}
+</style>
+</head>
+<body>
+<header class="bk-header"><nav class="bk-nav">
+<a href="/" class="bk-logo"><img src="https://bikeskart.com/assets/images/bikeskart-logo-theme.png?v=1" alt="BikesKart"><span>AUCTION</span></a>
+<div class="bk-nav-links"><a href="/">Auction Home</a><a href="/#live">Live Auctions</a><a href="/#how">How It Works</a></div>
+</nav></header>
+
+<main class="admin-wrap">
+<section class="admin-card">
+<div class="admin-panel active" id="loginPanel">
+<div class="admin-brand"><img src="https://bikeskart.com/assets/images/bikeskart-logo-theme.png?v=1" alt="BikesKart"><span>AUCTION ADMIN</span></div>
+<h1>Admin Login</h1>
+<p class="lead">Secure access to the BikesKart Auction administration area.</p>
+<form class="admin-form" id="loginForm">
+<label for="email">Email</label>
+<input id="email" name="email" type="email" autocomplete="username" placeholder="admin@bikeskart.com" required>
+<label for="password">Password</label>
+<input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+<button class="main-btn admin-submit" type="submit">LOGIN TO ADMIN →</button>
+<p class="admin-msg" id="loginMsg"></p>
+</form>
+</div>
+
+<div class="admin-panel" id="dashboardPanel">
+<div class="admin-top">
+<div>
+<div class="admin-brand"><img src="https://bikeskart.com/assets/images/bikeskart-logo-theme.png?v=1" alt="BikesKart"><span>AUCTION ADMIN</span></div>
+<h1>Admin Dashboard</h1>
+<p class="admin-user" id="adminUser"></p>
+</div>
+<div class="admin-actions"><button class="admin-secondary" id="logoutBtn">Logout</button></div>
+</div>
+<div class="admin-status">
+<strong>Admin access verified</strong>
+<p>Your admin account is authenticated and the protected admin API is responding. Auction management modules can be added here next.</p>
+</div>
+</div>
+</section>
+</main>
+
+<script src="/admin.js"></script>
+</body>
+</html>
