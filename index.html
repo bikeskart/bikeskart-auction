@@ -1,95 +1,48 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="BikesKart Auction - Discover and bid on quality used bikes through online auctions.">
-  <title>BikesKart Auction | Online Bike Auctions</title>
-  <link rel="stylesheet" href="/css/style.css">
-</head>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="BikesKart Auction - Buy quality used bikes through transparent online auctions.">
+<meta name="theme-color" content="#080b0f">
+<link rel="icon" href="https://bikeskart.com/assets/images/bikeskart-logo.svg">
+<title>BikesKart Auction | Buy Used Bikes at Auction</title>
+<link rel="stylesheet" href="/style.css"></head>
 <body>
-  <header class="topbar">
-    <div class="container nav">
-      <a class="brand" href="/">Bikes<span>Kart</span> <b>AUCTION</b></a>
-      <nav>
-        <a href="#live">Live Auctions</a>
-        <a href="#upcoming">Upcoming</a>
-        <a href="#how">How It Works</a>
-        <button class="login-btn" type="button">Login</button>
-      </nav>
-    </div>
-  </header>
+<header class="bk-header"><nav class="bk-nav">
+<a href="/" class="bk-logo"><img src="https://bikeskart.com/assets/images/bikeskart-logo-theme.png?v=1" alt="BikesKart"><span>AUCTION</span></a>
+<div class="bk-nav-links"><a href="#live">Live Auctions</a><a href="#upcoming">Upcoming</a><a href="#how">How It Works</a><a href="#register" class="cta">Register to Bid</a></div>
+<button class="menu" id="menu">☰</button></nav></header>
+<div class="mobile" id="mobile"><div><a href="#live">Live Auctions</a><a href="#upcoming">Upcoming Auctions</a><a href="#how">How It Works</a><a href="#info">Auction Information</a><a href="#register" class="cta">REGISTER TO BID →</a></div></div>
+<main>
+<section class="hero"><div class="hero-inner"><div>
+<div class="eyebrow"><i></i> BikesKart Online Auction</div>
+<h1>Find your next bike.<br><span>Bid with confidence.</span></h1>
+<p>Discover quality used motorcycles and scooters through BikesKart auctions. Check the bike details, follow the auction and place your bid online.</p>
+<div class="buttons"><a class="main-btn" href="#live">VIEW LIVE AUCTIONS →</a><a class="outline" href="#how">HOW IT WORKS</a></div>
+<small class="note">✓ Transparent bidding &nbsp; ✓ Vehicle details &nbsp; ✓ Secure winner process</small>
+</div><div class="visual"><img src="https://bikeskart.com/assets/images/hero-bike.jpg" alt="BikesKart used bike auction"><div class="overlay"></div><div class="live-card"><b>●</b><div><small>AUCTION MARKETPLACE</small><strong>Bid. Win. Ride.</strong></div></div></div></div></section>
 
-  <main>
-    <section class="hero">
-      <div class="container hero-grid">
-        <div>
-          <p class="eyebrow">BIKESKART AUCTION</p>
-          <h1>Bid smart.<br><strong>Ride better.</strong></h1>
-          <p class="hero-copy">A dedicated online marketplace for transparent used-bike auctions. Find your next bike, place your bid, and win it.</p>
-          <div class="hero-actions">
-            <a class="primary" href="#live">View Live Auctions</a>
-            <a class="secondary" href="#how">How it works</a>
-          </div>
-        </div>
-        <div class="hero-card">
-          <div class="live-pill"><i></i> LIVE AUCTION</div>
-          <div class="bike-silhouette">🏍️</div>
-          <div class="hero-stat">
-            <span>Next auction</span>
-            <strong>Starting soon</strong>
-          </div>
-        </div>
-      </div>
-    </section>
+<section class="trust"><div><b>₹</b><strong>Fair Bidding</strong><small>Transparent auction process</small></div><div><b>✓</b><strong>Bike Details</strong><small>Review before bidding</small></div><div><b>⚡</b><strong>Live Bids</strong><small>Follow auction activity</small></div><div><b>🏆</b><strong>Win Your Bike</strong><small>Simple winner process</small></div></section>
 
-    <section id="live" class="section">
-      <div class="container">
-        <div class="section-head">
-          <div><p class="eyebrow">LIVE NOW</p><h2>Featured Auctions</h2></div>
-          <span class="count">0 live auctions</span>
-        </div>
-        <div class="empty">
-          <div>🔨</div>
-          <h3>Auctions are being prepared</h3>
-          <p>Our first auction inventory will appear here once the admin adds bikes.</p>
-          <button class="primary small" type="button">Notify me</button>
-        </div>
-      </div>
-    </section>
+<section class="section" id="live"><div class="heading"><em>LIVE AUCTIONS</em><h2>Bid on quality used bikes.</h2><p>Our auction inventory will appear here as bikes are added by the BikesKart auction team.</p></div>
+<div class="empty"><div class="hammer">🔨</div><label>● AUCTIONS BEING PREPARED</label><h3>Our first bikes are coming soon.</h3><p>Register your interest and be ready when the first BikesKart auction goes live.</p><a class="main-btn small-btn" href="#register">REGISTER TO BID →</a></div></section>
 
-    <section id="upcoming" class="section muted">
-      <div class="container">
-        <p class="eyebrow">COMING SOON</p>
-        <h2>Upcoming Auctions</h2>
-        <div class="cards">
-          <article class="placeholder"><span>🏍️</span><h3>Bike auctions</h3><p>Upcoming inventory will be listed here.</p></article>
-          <article class="placeholder"><span>⏱️</span><h3>Timed bidding</h3><p>Follow auction start and end times.</p></article>
-          <article class="placeholder"><span>🏆</span><h3>Win your bike</h3><p>Winning bids will be managed securely.</p></article>
-        </div>
-      </div>
-    </section>
+<section class="categories" id="upcoming"><div class="heading"><em>UPCOMING AUCTIONS</em><h2>Choose the kind of bike you want.</h2><p>Future auction inventory can cover motorcycles and scooters across popular segments.</p></div><div class="track">
+<div class="cat"><img src="https://bikeskart.com/assets/images/commuter.jpg"><b>Commuter</b><small>Daily-use motorcycles</small></div>
+<div class="cat"><img src="https://bikeskart.com/assets/images/sports.jpg"><b>Sports</b><small>Performance machines</small></div>
+<div class="cat"><img src="https://bikeskart.com/assets/images/cruiser.jpg"><b>Cruiser</b><small>Powerful & stylish</small></div>
+<div class="cat"><img src="https://bikeskart.com/assets/images/scooter.jpg"><b>Scooter</b><small>Easy city rides</small></div>
+<div class="cat"><img src="https://bikeskart.com/assets/images/premium.jpg"><b>Premium</b><small>High-end motorcycles</small></div>
+<div class="cat"><img src="https://bikeskart.com/assets/images/final-bike.jpg"><b>Motorcycles</b><small>Popular segments</small></div>
+<div class="cat"><img src="https://bikeskart.com/assets/images/commuter.jpg"><b>Commuter</b><small>Daily-use motorcycles</small></div>
+<div class="cat"><img src="https://bikeskart.com/assets/images/sports.jpg"><b>Sports</b><small>Performance machines</small></div>
+</div></section>
 
-    <section id="how" class="section">
-      <div class="container">
-        <p class="eyebrow">SIMPLE PROCESS</p>
-        <h2>How BikesKart Auction Works</h2>
-        <div class="steps">
-          <div><b>01</b><h3>Register</h3><p>Create your bidder account.</p></div>
-          <div><b>02</b><h3>Inspect</h3><p>Review bike, RC and auction details.</p></div>
-          <div><b>03</b><h3>Bid</h3><p>Place your bid before the timer ends.</p></div>
-          <div><b>04</b><h3>Win</h3><p>Complete the winner process and ride away.</p></div>
-        </div>
-      </div>
-    </section>
-  </main>
+<section class="section" id="how"><div class="heading"><em>SIMPLE PROCESS</em><h2>How BikesKart Auction works.</h2><p>A straightforward process designed to make online bike bidding easy to understand.</p></div>
+<div class="steps"><article><b>01</b><h3>Register to bid</h3><p>Create your bidder account and complete the required verification.</p></article><article><b>02</b><h3>Inspect the bike</h3><p>Review photos, RC information, condition and auction terms.</p></article><article><b>03</b><h3>Place your bid</h3><p>Enter your bid while the auction is active and watch the timer.</p></article><article><b>04</b><h3>Win & complete</h3><p>Follow the payment and vehicle handover process.</p></article></div></section>
 
-  <footer>
-    <div class="container footer">
-      <div><a class="brand" href="/">Bikes<span>Kart</span> <b>AUCTION</b></a><p>Online used-bike auctions by BikesKart.</p></div>
-      <p>© <span id="year"></span> BikesKart. All rights reserved.</p>
-    </div>
-  </footer>
-  <script src="/js/app.js"></script>
-</body>
-</html>
+<section class="info" id="info"><div class="section"><div class="heading"><em>AUCTION INFORMATION</em><h2>Bid only when you're ready.</h2><p>Every auction listing will show the important information you need before placing a bid.</p></div><div class="info-grid"><article><b>01</b><h3>Vehicle Details</h3><p>Registration, model, year, kilometres, ownership and available documents.</p></article><article><b>02</b><h3>Auction Timer</h3><p>Clear start and end times so you know when bidding opens and closes.</p></article><article><b>03</b><h3>Winning Process</h3><p>Winning bidders receive the next steps for payment and vehicle handover.</p></article></div></div></section>
+
+<section class="final" id="register"><div><img src="https://bikeskart.com/assets/images/final-bike.jpg"><article><em>BIKESKART AUCTION</em><h2>Ready to bid on your next bike?</h2><p>Bidder registration and live auction access will open when the auction system is launched.</p><a class="main-btn" href="#live">VIEW AUCTION STATUS →</a></article></div></section>
+</main>
+<footer><div class="footer"><div><img src="https://bikeskart.com/assets/images/bikeskart-logo-theme.png?v=1"><span>AUCTION</span><p>Online used-bike auctions by BikesKart.</p></div><div><h4>Auction</h4><a href="#live">Live Auctions</a><a href="#upcoming">Upcoming Auctions</a><a href="#how">How It Works</a></div><div><h4>Information</h4><a href="https://bikeskart.com/">BikesKart Main Site</a><a href="https://bikeskart.com/privacy-policy.php">Privacy Policy</a><a href="https://bikeskart.com/terms-conditions.php">Terms & Conditions</a></div></div><div class="copyright">© <span id="year"></span> BikesKart. All rights reserved.</div></footer>
+<script src="/app.js"></script></body></html>
