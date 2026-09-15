@@ -26,8 +26,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/admin/bikes", bikeRoutes);
 
 // Uploaded bike photos/RC documents live in the persistent public_html area.
-app.use("/uploads", express.static(path.resolve(__dirname, "../public_html/uploads")));
-
+app.use("/uploads", express.static(path.resolve(__dirname, "public_html/uploads")));
 app.get("/health", (req, res) => res.json({ ok: true, service: "bikeskart-auction" }));
 app.get("/health/db", async (req, res, next) => {
   try {
