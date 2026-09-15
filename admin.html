@@ -31,7 +31,11 @@
 .admin-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 22px}.admin-tab{background:#151a20;color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 15px;cursor:pointer}.admin-tab.active{background:linear-gradient(135deg,#e6392f,#ff6a00);border-color:transparent}
 .bike-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.bike-field label{display:block;font-size:13px;font-weight:700;margin:0 0 8px}.bike-field input,.bike-field select,.bike-field textarea{width:100%;box-sizing:border-box;background:#0b0f14;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:13px 14px;outline:none}.bike-field textarea{min-height:110px;resize:vertical}.bike-field input:focus,.bike-field select:focus,.bike-field textarea:focus{border-color:#ff6548}.bike-field.full{grid-column:1/-1}.file-help{color:#89929c;font-size:12px;margin-top:6px}.bike-form-actions{display:flex;gap:10px;align-items:center;margin-top:20px}.bike-msg{color:#ff8a75;font-size:13px}.bike-list{margin-top:28px}.bike-row{display:grid;grid-template-columns:76px 1.5fr 1fr .8fr auto;gap:14px;align-items:center;padding:12px 0;border-top:1px solid rgba(255,255,255,.08)}.bike-thumb{width:76px;height:58px;border-radius:9px;object-fit:cover;background:#0b0f14}.bike-meta b{display:block}.bike-meta small{color:#89929c}.status-pill{display:inline-block;padding:6px 9px;border-radius:99px;background:#151a20;color:#cbd1d7;font-size:11px;text-transform:uppercase}.empty-state{color:#89929c;padding:20px 0}.admin-section-title{margin:0 0 6px;font-size:22px}.admin-section-lead{margin:0 0 20px;color:#89929c}.logout-top{white-space:nowrap}
 @media(max-width:760px){.bike-form-grid{grid-template-columns:1fr}.bike-field.full{grid-column:auto}.bike-row{grid-template-columns:58px 1fr}.bike-row> :nth-child(n+3){grid-column:2}.bike-thumb{width:58px;height:48px}}
-</style></head>
+</style>
+<style>
+.details-panel{display:none;margin-top:24px;background:#0b0f14;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:22px}.details-panel.active{display:block}.details-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:20px}.details-head h2{margin:0 0 5px}.details-sub{color:#89929c;font-size:13px}.details-actions{display:flex;gap:9px;flex-wrap:wrap}.details-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.details-field label{display:block;font-size:12px;font-weight:700;margin-bottom:7px}.details-field input,.details-field select,.details-field textarea{width:100%;box-sizing:border-box;background:#11161c;border:1px solid rgba(255,255,255,.12);color:#fff;border-radius:10px;padding:12px}.details-field textarea{min-height:105px;resize:vertical}.details-field.full{grid-column:1/-1}.details-photos{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:10px}.details-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;background:#11161c}.details-note{font-size:12px;color:#89929c;margin-top:7px}.detail-msg{min-height:20px;color:#ff8a75;font-size:13px;margin-top:12px}.bike-row{cursor:pointer}.bike-row:hover{background:rgba(255,255,255,.025)}.view-btn{background:#151a20;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:8px 10px;cursor:pointer}.status-select{width:100%;background:#0b0f14;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px}@media(max-width:760px){.details-grid{grid-template-columns:1fr}.details-field.full{grid-column:auto}.details-photos{grid-template-columns:repeat(2,1fr)}.details-head{display:block}.details-actions{margin-top:12px}}
+</style>
+</head>
 <body>
 <header class="bk-header"><nav class="bk-nav">
 <a href="/" class="bk-logo"><img src="https://bikeskart.com/assets/images/bikeskart-logo-theme.png?v=1" alt="BikesKart"><span>AUCTION</span></a>
@@ -83,6 +87,27 @@
 </div>
 <div class="bike-form-actions"><button class="main-btn" type="submit" id="saveBikeBtn">SAVE BIKE →</button><span class="bike-msg" id="bikeMsg"></span></div>
 </form>
+<div class="details-panel" id="bikeDetailsPanel">
+<div class="details-head"><div><h2 id="detailsTitle">Bike Details</h2><div class="details-sub" id="detailsSub"></div></div><div class="details-actions"><button class="admin-secondary" type="button" id="closeDetailsBtn">Close</button></div></div>
+<form id="editBikeForm" enctype="multipart/form-data">
+<input type="hidden" id="editBikeId">
+<div class="details-grid">
+<div class="details-field"><label for="editBrand">Brand *</label><input id="editBrand" required></div>
+<div class="details-field"><label for="editModel">Model *</label><input id="editModel" required></div>
+<div class="details-field"><label for="editYear">Year *</label><input id="editYear" type="number" min="1950" max="2100" required></div>
+<div class="details-field"><label for="editRegistrationNumber">Registration Number</label><input id="editRegistrationNumber"></div>
+<div class="details-field"><label for="editKilometersDriven">Kilometres</label><input id="editKilometersDriven" type="number" min="0"></div>
+<div class="details-field"><label for="editOwnershipCount">Ownership Count</label><input id="editOwnershipCount" type="number" min="1" max="255"></div>
+<div class="details-field"><label for="editFuelType">Fuel Type</label><select id="editFuelType"><option value="">Select</option><option>Petrol</option><option>Electric</option><option>Other</option></select></div>
+<div class="details-field"><label for="editStatus">Status</label><select id="editStatus" class="status-select"><option value="draft">Draft</option><option value="ready">Ready</option><option value="in_auction">In Auction</option><option value="sold">Sold</option><option value="unsold">Unsold</option></select></div>
+<div class="details-field full"><label for="editConditionNotes">Condition Notes</label><textarea id="editConditionNotes"></textarea></div>
+<div class="details-field full"><label>Existing Bike Photos</label><div id="existingPhotos" class="details-photos"></div><div class="details-note">Existing photos are kept. You can add more below.</div></div>
+<div class="details-field"><label for="editBikePhotos">Add Bike Photos</label><input id="editBikePhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple><div class="details-note">Up to 8 files per update · max 8 MB each</div></div>
+<div class="details-field"><label for="editRcDocument">Replace RC Document</label><input id="editRcDocument" type="file" accept="application/pdf,image/jpeg,image/png,image/webp"><div class="details-note" id="rcCurrent"></div></div>
+</div>
+<div class="bike-form-actions"><button class="main-btn" type="submit" id="updateBikeBtn">SAVE CHANGES →</button><span class="detail-msg" id="detailMsg"></span></div>
+</form>
+</div>
 <div class="bike-list"><h2 class="admin-section-title">Recent Bikes</h2><div id="bikeList" class="empty-state">Loading…</div></div>
 </div>
 </div>
