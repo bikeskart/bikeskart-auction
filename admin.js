@@ -1,159 +1,296 @@
-(() => {
-  let accessToken = null;
-  const loginPanel = document.getElementById("loginPanel");
-  const dashboardPanel = document.getElementById("dashboardPanel");
-  const loginForm = document.getElementById("loginForm");
-  const loginMsg = document.getElementById("loginMsg");
-  const adminUser = document.getElementById("adminUser");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const bikeForm = document.getElementById("bikeForm");
-  const bikeMsg = document.getElementById("bikeMsg");
-  const bikeList = document.getElementById("bikeList");
-  const saveBikeBtn = document.getElementById("saveBikeBtn");
-  const bikeDetailsPanel = document.getElementById("bikeDetailsPanel");
-  const editBikeForm = document.getElementById("editBikeForm");
-  const updateBikeBtn = document.getElementById("updateBikeBtn");
-  const detailMsg = document.getElementById("detailMsg");
+let accessToken = null;
 
-  function showDashboard(user) {
-    loginPanel.classList.remove("active");
-    dashboardPanel.classList.add("active");
-    adminUser.textContent = `${user.full_name || user.email} • Administrator`;
-    loadBikes();
-  }
-  function showLogin(message = "") {
-    accessToken = null;
-    dashboardPanel.classList.remove("active");
-    loginPanel.classList.add("active");
-    loginMsg.textContent = message;
-  }
-  async function login(email, password) {
-    const res = await fetch("/api/auth/login", {method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({email,password})});
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || "Login failed");
-    if (!data.user || data.user.role !== "admin") {
-      await fetch("/api/auth/logout", {method:"POST",credentials:"include"});
-      throw new Error("This login is not an administrator account");
-    }
-    accessToken = data.accessToken;
-    return data.user;
-  }
-  async function verifyAdmin() {
-    if (!accessToken) return false;
-    const res = await fetch("/api/admin/ping", {headers:{Authorization:`Bearer ${accessToken}`},credentials:"include"});
-    return res.ok;
-  }
-  async function refreshSession() {
-    const res = await fetch("/api/auth/refresh", {method:"POST",credentials:"include"});
-    if (!res.ok) return false;
-    const data = await res.json().catch(() => ({}));
-    if (!data.accessToken) return false;
-    accessToken = data.accessToken;
-    return true;
-  }
-  async function api(url, options={}) {
-    const headers = new Headers(options.headers || {});
-    headers.set("Authorization", `Bearer ${accessToken}`);
-    return fetch(url, {...options, headers, credentials:"include"});
-  }
-  function esc(v) { return String(v ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
-  function setValue(id, value) { document.getElementById(id).value = value ?? ""; }
-  function showDetailsPanel() { bikeDetailsPanel.classList.add("active"); bikeDetailsPanel.scrollIntoView({behavior:"smooth", block:"start"}); }
-  function hideDetailsPanel() { bikeDetailsPanel.classList.remove("active"); detailMsg.textContent = ""; editBikeForm.reset(); }
-  async function openBikeDetails(id) {
-    detailMsg.textContent = "Loading…";
-    showDetailsPanel();
+const $ = (id) => document.getElementById(id);
+
+async function api(url, options = {}) {
+  options.headers = options.headers || {};
+  if (accessToken) options.headers.Authorization = `Bearer ${accessToken}`;
+
+  let res = await fetch(url, options);
+
+  if (res.status === 401) {
     try {
-      const res = await api(`/api/admin/bikes/${encodeURIComponent(id)}`);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Could not load bike");
-      const b = data.bike;
-      setValue("editBikeId", b.id); setValue("editBrand", b.brand); setValue("editModel", b.model);
-      setValue("editYear", b.year); setValue("editRegistrationNumber", b.registration_number);
-      setValue("editKilometersDriven", b.kilometers_driven); setValue("editOwnershipCount", b.ownership_count);
-      setValue("editFuelType", b.fuel_type); setValue("editStatus", b.status); setValue("editConditionNotes", b.condition_notes);
-      document.getElementById("detailsTitle").textContent = `${b.brand} ${b.model}`;
-      document.getElementById("detailsSub").textContent = `Bike #${b.id} • ${b.status || "draft"}`;
-      const photos = document.getElementById("existingPhotos");
-      photos.innerHTML = b.images?.length ? b.images.map(img => `<img src="${esc(img.image_url)}" alt="Bike photo">`).join("") : `<div class="details-note">No bike photos uploaded.</div>`;
-      const rc = document.getElementById("rcCurrent");
-      rc.innerHTML = b.rc_document_url ? `<a href="${esc(b.rc_document_url)}" target="_blank" rel="noopener">Current RC document</a>` : "No RC document uploaded.";
-      detailMsg.textContent = "";
-    } catch (e) { detailMsg.textContent = e.message; }
-  }
-  async function loadBikes() {
-    bikeList.textContent = "Loading…";
-    try {
-      const res = await api("/api/admin/bikes?page=1&pageSize=20");
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Could not load bikes");
-      if (!data.rows?.length) { bikeList.innerHTML = '<div class="empty-state">No bikes added yet.</div>'; return; }
-      bikeList.innerHTML = data.rows.map(b => `
-        <div class="bike-row" data-bike-id="${esc(b.id)}">
-          ${b.cover_image ? `<img class="bike-thumb" src="${esc(b.cover_image)}" alt="">` : `<div class="bike-thumb"></div>`}
-          <div class="bike-meta"><b>${esc(b.brand)} ${esc(b.model)}</b><small>${esc(b.year)}${b.registration_number ? ` · ${esc(b.registration_number)}` : ""}</small></div>
-          <div class="bike-meta"><small>${b.kilometers_driven != null ? `${esc(b.kilometers_driven)} km` : "KM not added"}</small></div>
-          <div><span class="status-pill">${esc(b.status)}</span></div>
-          <div><button class="view-btn" type="button" data-view-bike="${esc(b.id)}">VIEW / EDIT</button></div>
-        </div>`).join("");
-    } catch (e) { bikeList.textContent = e.message; }
-  }
-  bikeList.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-view-bike]");
-    const row = e.target.closest("[data-bike-id]");
-    const id = btn?.dataset.viewBike || row?.dataset.bikeId;
-    if (id) openBikeDetails(id);
-  });
-  document.getElementById("closeDetailsBtn").addEventListener("click", hideDetailsPanel);
-  editBikeForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const id = document.getElementById("editBikeId").value;
-    if (!id) return;
-    detailMsg.textContent = "Saving…"; updateBikeBtn.disabled = true;
-    try {
-      const fd = new FormData();
-      for (const [field, id2] of [["brand","editBrand"],["model","editModel"],["year","editYear"],["registrationNumber","editRegistrationNumber"],["kilometersDriven","editKilometersDriven"],["ownershipCount","editOwnershipCount"],["fuelType","editFuelType"],["status","editStatus"],["conditionNotes","editConditionNotes"]]) fd.set(field, document.getElementById(id2).value.trim());
-      for (const file of document.getElementById("editBikePhotos").files) fd.append("bikePhotos", file);
-      const rc = document.getElementById("editRcDocument").files[0]; if (rc) fd.append("rcDocument", rc);
-      const res = await api(`/api/admin/bikes/${encodeURIComponent(id)}`, {method:"PUT", body:fd});
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Could not update bike");
-      detailMsg.textContent = `Bike #${id} updated successfully.`;
-      await openBikeDetails(id); await loadBikes();
-    } catch (e) { detailMsg.textContent = e.message; }
-    finally { updateBikeBtn.disabled = false; }
-  });
-  bikeForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    bikeMsg.textContent = "Saving…";
-    saveBikeBtn.disabled = true;
-    try {
-      const res = await api("/api/admin/bikes", {method:"POST",body:new FormData(bikeForm)});
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Could not save bike");
-      bikeForm.reset();
-      bikeMsg.textContent = `Bike #${data.bike.id} saved as draft.`;
-      await loadBikes();
-    } catch (e) { bikeMsg.textContent = e.message; }
-    finally { saveBikeBtn.disabled = false; }
-  });
-  loginForm.addEventListener("submit", async (e) => {
-    e.preventDefault(); loginMsg.textContent = "Signing in…";
-    try {
-      const user = await login(document.getElementById("email").value.trim(), document.getElementById("password").value);
-      if (!(await verifyAdmin())) throw new Error("Admin verification failed");
-      loginForm.reset(); showDashboard(user);
-    } catch (err) { showLogin(err.message); }
-  });
-  logoutBtn.addEventListener("click", async () => { await fetch("/api/auth/logout",{method:"POST",credentials:"include"}).catch(()=>{}); showLogin("You have been logged out."); });
-  (async () => {
-    try {
-      if (await refreshSession()) {
-        const res = await fetch("/api/auth/me",{headers:{Authorization:`Bearer ${accessToken}`},credentials:"include"});
-        const data = await res.json().catch(()=>({}));
-        if (res.ok && data.user?.role === "admin" && await verifyAdmin()) { showDashboard(data.user); return; }
+      const refresh = await fetch("/api/auth/refresh", { method: "POST" });
+      if (refresh.ok) {
+        const data = await refresh.json();
+        accessToken = data.accessToken;
+        options.headers.Authorization = `Bearer ${accessToken}`;
+        res = await fetch(url, options);
       }
-    } catch {}
-    showLogin("");
-  })();
-})();
+    } catch (_) {}
+  }
+
+  return res;
+}
+
+function showMessage(message, ok = false) {
+  const el = $("bikeMsg") || $("detailMsg");
+  if (!el) return;
+  el.textContent = message;
+  el.className = ok ? "msg success" : "msg error";
+}
+
+async function loadBikes() {
+  const list = $("recentBikes");
+  if (!list) return;
+
+  list.innerHTML = "<p>Loading bikes...</p>";
+
+  try {
+    const res = await api("/api/admin/bikes?page=1&pageSize=20");
+    const data = await res.json();
+
+    if (!res.ok) {
+      list.innerHTML = `<p>${data.message || "Could not load bikes."}</p>`;
+      return;
+    }
+
+    const bikes = data.bikes || data.items || [];
+
+    if (!bikes.length) {
+      list.innerHTML = "<p>No bikes added yet.</p>";
+      return;
+    }
+
+    list.innerHTML = bikes.map((bike) => `
+      <div class="bike-row" data-bike-id="${bike.id}">
+        <div class="bike-row-main">
+          <strong>${escapeHtml(bike.brand || "")} ${escapeHtml(bike.model || "")}</strong>
+          <span>${escapeHtml(String(bike.year || ""))} · ${escapeHtml(bike.status || "draft")}</span>
+        </div>
+        <button type="button" class="btn btn-small" data-view-bike="${bike.id}">VIEW / EDIT</button>
+      </div>
+    `).join("");
+  } catch (err) {
+    list.innerHTML = "<p>Could not connect to the server.</p>";
+  }
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function openBikeDetails(id) {
+  const panel = $("bikeDetailsPanel");
+  if (!panel) return;
+
+  panel.hidden = false;
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  const msg = $("detailMsg");
+  if (msg) msg.textContent = "Loading bike details...";
+
+  try {
+    const res = await api(`/api/admin/bikes/${encodeURIComponent(id)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (msg) msg.textContent = data.message || "Could not load bike.";
+      return;
+    }
+
+    const bike = data.bike || data;
+
+    const fields = {
+      editBrand: bike.brand,
+      editModel: bike.model,
+      editYear: bike.year,
+      editRegistrationNumber: bike.registration_number,
+      editKilometersDriven: bike.kilometers_driven,
+      editOwnershipCount: bike.ownership_count,
+      editFuelType: bike.fuel_type,
+      editStatus: bike.status || "draft",
+      editConditionNotes: bike.condition_notes
+    };
+
+    Object.entries(fields).forEach(([id, value]) => {
+      const el = $(id);
+      if (el) el.value = value == null ? "" : value;
+    });
+
+    const existingPhotos = $("existingPhotos");
+    if (existingPhotos) {
+      const photos = bike.images || bike.photos || [];
+      existingPhotos.innerHTML = photos.length
+        ? photos.map((photo) => `
+            <img src="${escapeHtml(photo.image_url || photo.url || photo)}"
+                 alt="Bike photo"
+                 style="width:110px;height:80px;object-fit:cover;border-radius:10px;">
+          `).join("")
+        : "<p>No photos uploaded.</p>";
+    }
+
+    const rcCurrent = $("rcCurrent");
+    if (rcCurrent) {
+      rcCurrent.innerHTML = bike.rc_document_url
+        ? `<a href="${escapeHtml(bike.rc_document_url)}" target="_blank" rel="noopener">View current RC document</a>`
+        : "No RC document uploaded.";
+    }
+
+    if (msg) msg.textContent = `Bike ${bike.id} loaded.`;
+    panel.dataset.bikeId = bike.id;
+  } catch (_) {
+    if (msg) msg.textContent = "Could not load bike details.";
+  }
+}
+
+document.addEventListener("click", (event) => {
+  const viewButton = event.target.closest("[data-view-bike]");
+  if (viewButton) {
+    event.preventDefault();
+    openBikeDetails(viewButton.dataset.viewBike);
+    return;
+  }
+
+  const row = event.target.closest(".bike-row[data-bike-id]");
+  if (row && !event.target.closest("button")) {
+    openBikeDetails(row.dataset.bikeId);
+  }
+
+  if (event.target.closest("[data-close-bike-details]")) {
+    const panel = $("bikeDetailsPanel");
+    if (panel) panel.hidden = true;
+  }
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const loginForm = $("adminLoginForm");
+
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const email = $("adminEmail")?.value.trim();
+      const password = $("adminPassword")?.value;
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showMessage(data.message || "Login failed.");
+          return;
+        }
+
+        if (data.user?.role !== "admin") {
+          showMessage("Admin access required.");
+          return;
+        }
+
+        accessToken = data.accessToken;
+        loginForm.hidden = true;
+
+        const dashboard = $("adminDashboard");
+        if (dashboard) dashboard.hidden = false;
+
+        await loadBikes();
+      } catch (_) {
+        showMessage("Could not connect to the server.");
+      }
+    });
+  }
+
+  const addBikeForm = $("addBikeForm");
+  if (addBikeForm) {
+    addBikeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const formData = new FormData(addBikeForm);
+
+      try {
+        const res = await api("/api/admin/bikes", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          showMessage(data.message || "Could not save bike.");
+          return;
+        }
+
+        showMessage(`Bike ${data.bike?.id || ""} saved as draft.`, true);
+        addBikeForm.reset();
+        await loadBikes();
+      } catch (_) {
+        showMessage("Could not connect to the server.");
+      }
+    });
+  }
+
+  const editBikeForm = $("editBikeForm");
+  if (editBikeForm) {
+    editBikeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const panel = $("bikeDetailsPanel");
+      const id = panel?.dataset.bikeId;
+      if (!id) return;
+
+      const formData = new FormData(editBikeForm);
+
+      try {
+        const res = await api(`/api/admin/bikes/${encodeURIComponent(id)}`, {
+          method: "PUT",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          if ($("detailMsg")) $("detailMsg").textContent = data.message || "Could not update bike.";
+          return;
+        }
+
+        if ($("detailMsg")) $("detailMsg").textContent = `Bike ${id} updated successfully.`;
+        await loadBikes();
+        await openBikeDetails(id);
+      } catch (_) {
+        if ($("detailMsg")) $("detailMsg").textContent = "Could not connect to the server.";
+      }
+    });
+  }
+
+  const refreshBtn = $("refreshBikesBtn");
+  if (refreshBtn) refreshBtn.addEventListener("click", loadBikes);
+
+  const logoutBtn = $("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+      } catch (_) {}
+      accessToken = null;
+      location.reload();
+    });
+  }
+
+  // If this page is already authenticated by the refresh cookie,
+  // restore the admin session automatically.
+  try {
+    const refresh = await fetch("/api/auth/refresh", { method: "POST" });
+    if (refresh.ok) {
+      const data = await refresh.json();
+      accessToken = data.accessToken;
+
+      const ping = await api("/api/admin/ping");
+      if (ping.ok) {
+        if (loginForm) loginForm.hidden = true;
+        const dashboard = $("adminDashboard");
+        if (dashboard) dashboard.hidden = false;
+        await loadBikes();
+      }
+    }
+  } catch (_) {}
+});
