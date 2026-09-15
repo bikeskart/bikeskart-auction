@@ -10,6 +10,10 @@
   const bikeMsg = document.getElementById("bikeMsg");
   const bikeList = document.getElementById("bikeList");
   const saveBikeBtn = document.getElementById("saveBikeBtn");
+  const bikeDetailsPanel = document.getElementById("bikeDetailsPanel");
+  const editBikeForm = document.getElementById("editBikeForm");
+  const updateBikeBtn = document.getElementById("updateBikeBtn");
+  const detailMsg = document.getElementById("detailMsg");
 
   function showDashboard(user) {
     loginPanel.classList.remove("active");
@@ -53,6 +57,30 @@
     return fetch(url, {...options, headers, credentials:"include"});
   }
   function esc(v) { return String(v ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
+  function setValue(id, value) { document.getElementById(id).value = value ?? ""; }
+  function showDetailsPanel() { bikeDetailsPanel.classList.add("active"); bikeDetailsPanel.scrollIntoView({behavior:"smooth", block:"start"}); }
+  function hideDetailsPanel() { bikeDetailsPanel.classList.remove("active"); detailMsg.textContent = ""; editBikeForm.reset(); }
+  async function openBikeDetails(id) {
+    detailMsg.textContent = "Loading…";
+    showDetailsPanel();
+    try {
+      const res = await api(`/api/admin/bikes/${encodeURIComponent(id)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not load bike");
+      const b = data.bike;
+      setValue("editBikeId", b.id); setValue("editBrand", b.brand); setValue("editModel", b.model);
+      setValue("editYear", b.year); setValue("editRegistrationNumber", b.registration_number);
+      setValue("editKilometersDriven", b.kilometers_driven); setValue("editOwnershipCount", b.ownership_count);
+      setValue("editFuelType", b.fuel_type); setValue("editStatus", b.status); setValue("editConditionNotes", b.condition_notes);
+      document.getElementById("detailsTitle").textContent = `${b.brand} ${b.model}`;
+      document.getElementById("detailsSub").textContent = `Bike #${b.id} • ${b.status || "draft"}`;
+      const photos = document.getElementById("existingPhotos");
+      photos.innerHTML = b.images?.length ? b.images.map(img => `<img src="${esc(img.image_url)}" alt="Bike photo">`).join("") : `<div class="details-note">No bike photos uploaded.</div>`;
+      const rc = document.getElementById("rcCurrent");
+      rc.innerHTML = b.rc_document_url ? `<a href="${esc(b.rc_document_url)}" target="_blank" rel="noopener">Current RC document</a>` : "No RC document uploaded.";
+      detailMsg.textContent = "";
+    } catch (e) { detailMsg.textContent = e.message; }
+  }
   async function loadBikes() {
     bikeList.textContent = "Loading…";
     try {
@@ -61,15 +89,40 @@
       if (!res.ok) throw new Error(data.error || "Could not load bikes");
       if (!data.rows?.length) { bikeList.innerHTML = '<div class="empty-state">No bikes added yet.</div>'; return; }
       bikeList.innerHTML = data.rows.map(b => `
-        <div class="bike-row">
+        <div class="bike-row" data-bike-id="${esc(b.id)}">
           ${b.cover_image ? `<img class="bike-thumb" src="${esc(b.cover_image)}" alt="">` : `<div class="bike-thumb"></div>`}
           <div class="bike-meta"><b>${esc(b.brand)} ${esc(b.model)}</b><small>${esc(b.year)}${b.registration_number ? ` · ${esc(b.registration_number)}` : ""}</small></div>
           <div class="bike-meta"><small>${b.kilometers_driven != null ? `${esc(b.kilometers_driven)} km` : "KM not added"}</small></div>
           <div><span class="status-pill">${esc(b.status)}</span></div>
-          <div><small>#${esc(b.id)}</small></div>
+          <div><button class="view-btn" type="button" data-view-bike="${esc(b.id)}">VIEW / EDIT</button></div>
         </div>`).join("");
     } catch (e) { bikeList.textContent = e.message; }
   }
+  bikeList.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-view-bike]");
+    const row = e.target.closest("[data-bike-id]");
+    const id = btn?.dataset.viewBike || row?.dataset.bikeId;
+    if (id) openBikeDetails(id);
+  });
+  document.getElementById("closeDetailsBtn").addEventListener("click", hideDetailsPanel);
+  editBikeForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = document.getElementById("editBikeId").value;
+    if (!id) return;
+    detailMsg.textContent = "Saving…"; updateBikeBtn.disabled = true;
+    try {
+      const fd = new FormData();
+      for (const [field, id2] of [["brand","editBrand"],["model","editModel"],["year","editYear"],["registrationNumber","editRegistrationNumber"],["kilometersDriven","editKilometersDriven"],["ownershipCount","editOwnershipCount"],["fuelType","editFuelType"],["status","editStatus"],["conditionNotes","editConditionNotes"]]) fd.set(field, document.getElementById(id2).value.trim());
+      for (const file of document.getElementById("editBikePhotos").files) fd.append("bikePhotos", file);
+      const rc = document.getElementById("editRcDocument").files[0]; if (rc) fd.append("rcDocument", rc);
+      const res = await api(`/api/admin/bikes/${encodeURIComponent(id)}`, {method:"PUT", body:fd});
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not update bike");
+      detailMsg.textContent = `Bike #${id} updated successfully.`;
+      await openBikeDetails(id); await loadBikes();
+    } catch (e) { detailMsg.textContent = e.message; }
+    finally { updateBikeBtn.disabled = false; }
+  });
   bikeForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     bikeMsg.textContent = "Saving…";
