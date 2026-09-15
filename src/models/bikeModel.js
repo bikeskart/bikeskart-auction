@@ -73,4 +73,14 @@ async function listBikes({ status, page = 1, pageSize = 20 } = {}) {
   return { rows, total, page, pageSize };
 }
 
-module.exports = { createBike, addBikeImages, getBikeById, listBikes };
+async function updateBike(bikeId, fields) {
+  const allowed = ["brand","model","year","registration_number","kilometers_driven","ownership_count","fuel_type","condition_notes","status"];
+  const setClauses=[]; const params=[];
+  for (const [key,value] of Object.entries(fields)) { if (allowed.includes(key)) { setClauses.push(`${key} = ?`); params.push(value); } }
+  if (!setClauses.length) return getBikeById(bikeId);
+  params.push(bikeId);
+  await pool.query(`UPDATE bikes SET ${setClauses.join(", ")} WHERE id = ?`, params);
+  return getBikeById(bikeId);
+}
+
+module.exports = { createBike, addBikeImages, getBikeById, listBikes, updateBike };
