@@ -24,8 +24,7 @@ const app = express();
  * Since server.js is in the project root, the equivalent path is:
  * path.resolve(__dirname, "public_html/uploads")
  */
-const uploadRoot = path.resolve(__dirname, "public_html/uploads");
-
+const uploadRoot = path.resolve(__dirname, "uploads");
 app.use(helmet());
 
 app.use(
