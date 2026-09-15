@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 
-const uploadRoot = path.resolve(__dirname, "../../public_html/uploads");
+const uploadRoot = path.resolve(__dirname, "../../uploads");
 const bikePhotosDir = path.join(uploadRoot, "bikes");
 const rcDocsDir = path.join(uploadRoot, "rc");
 fs.mkdirSync(bikePhotosDir, { recursive: true });
