@@ -47,6 +47,7 @@ app.use("/api/admin", adminRoutes);
 /*
  * Admin bike routes
  */
+app.use("/api/admin/bike-import", require("./src/routes/bulkBikeRoutes"));
 app.use("/api/admin/bikes", bikeRoutes);
 app.use("/api/auctions", auctionRoutes);
 app.use("/api/admin/accounts", accountRoutes);
