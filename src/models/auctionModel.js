@@ -1,3 +1,4 @@
+const {ensureBikeProfile,readProfile}=require("../utils/bikeProfile");
 const rules = require('../utils/auctionRules');
 const {auctionFilters} = require('../utils/auctionFilters');
 const isoSQL = value => new Date(value).toISOString().slice(0,23).replace('T',' ');
@@ -133,10 +134,11 @@ function createAuctionModel(pool) {
     await close(id);
     const [[time]] = await pool.query("SELECT DATE_FORMAT(UTC_TIMESTAMP(3),'%Y-%m-%dT%H:%i:%s.%fZ') AS server_now");
     const [[a]] = await pool.query(`${selectAuction} WHERE a.id = ?`,[id]);
-    const [[bike]] = await pool.query('SELECT id,brand,model,registration_number,year,kilometers_driven,ownership_count,fuel_type,condition_notes FROM bikes WHERE id = ?',[a.bike_id]);
+    await ensureBikeProfile(pool);
+    const [[bike]] = await pool.query('SELECT id,brand,model,registration_number,year,kilometers_driven,ownership_count,fuel_type,condition_notes,detail_profile FROM bikes WHERE id = ?',[a.bike_id]);
     const [images] = await pool.query('SELECT image_url FROM bike_images WHERE bike_id = ? ORDER BY sort_order,id',[a.bike_id]);
     const [bids] = await pool.query('SELECT amount, DATE_FORMAT(created_at,\'%Y-%m-%dT%H:%i:%s.%fZ\') AS created_at FROM auction_bids WHERE auction_id = ? ORDER BY id DESC LIMIT 20',[id]);
-    return {auction:publicAuction(a,new Date(time.server_now).getTime(),viewer),bike:{...bike,images},bids,serverNow:time.server_now};
+    return {auction:publicAuction(a,new Date(time.server_now).getTime(),viewer),bike:{...bike,detail_profile:readProfile(bike.detail_profile),images},bids,serverNow:time.server_now};
   }
   return {create,bid,cancel,closeDue,list,detail};
 }
