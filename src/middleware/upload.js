@@ -13,7 +13,7 @@ const imageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const rcTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 
 function safeName(original) {
-  const ext = path.extname(original || "").toLowerCase();
+  const ext = { "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "application/pdf": ".pdf" }[original];
   return `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`;
 }
 
@@ -22,7 +22,7 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname === "rcDocument" ? rcDocsDir : bikePhotosDir);
   },
   filename(req, file, cb) {
-    cb(null, safeName(file.originalname));
+    cb(null, safeName(file.mimetype));
   },
 });
 

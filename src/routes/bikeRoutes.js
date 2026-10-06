@@ -4,6 +4,25 @@ const { requireAuth, requireRole } = require("../middleware/auth");
 const upload = require("../middleware/upload");
 const { createBike, addBikeImages, getBikeById, listBikes, updateBike } = require("../models/bikeModel");
 
+function validateBike(req, res, next) {
+  const fail = message => {
+    for (const files of Object.values(req.files || {})) for (const file of files) require("fs").unlink(file.path, () => {});
+    return res.status(400).json({ error: message });
+  };
+  const brand = String(req.body.brand || "").trim();
+  const model = String(req.body.model || "").trim();
+  if (!brand || !model || brand.length > 150 || model.length > 150) return fail("Brand and model must be between 1 and 150 characters");
+  const year = Number(req.body.year);
+  if (!Number.isInteger(year) || year < 1950 || year > new Date().getFullYear() + 1) return fail("Invalid bike year");
+  for (const [key, min, max] of [["kilometersDriven", 0, 2147483647], ["ownershipCount", 1, 255]]) {
+    const value = req.body[key];
+    if (value != null && value !== "" && (!Number.isInteger(Number(value)) || Number(value) < min || Number(value) > max)) return fail(`Invalid ${key}`);
+    if (value == null) req.body[key] = "";
+  }
+  if (req.method === "PUT" && !["draft", "ready", "in_auction", "sold", "unsold"].includes(req.body.status || "draft")) return fail("Invalid bike status");
+  next();
+}
+
 router.use(requireAuth, requireRole("admin"));
 
 router.get("/", async (req, res, next) => {
@@ -12,6 +31,18 @@ router.get("/", async (req, res, next) => {
     const pageSize = Math.min(Math.max(parseInt(req.query.pageSize, 10) || 20, 1), 50);
     const status = req.query.status || undefined;
     res.json(await listBikes({ status, page, pageSize }));
+  } catch (err) { next(err); }
+});
+
+router.get("/:id/rc", async (req, res, next) => {
+  try {
+    const bike = await getBikeById(req.params.id);
+    if (!bike || !bike.rc_document_url) return res.status(404).json({ error: "RC document not found" });
+    const path = require("path");
+    const filename = path.basename(bike.rc_document_url);
+    if (bike.rc_document_url !== `/uploads/rc/${filename}`) return res.status(404).json({ error: "RC document not found" });
+    res.set("Cache-Control", "no-store");
+    res.sendFile(path.join(upload.uploadRoot, "rc", filename), err => { if (err) next(err); });
   } catch (err) { next(err); }
 });
 
@@ -26,7 +57,7 @@ router.get("/:id", async (req, res, next) => {
 router.put("/:id", upload.fields([
   { name: "bikePhotos", maxCount: 8 },
   { name: "rcDocument", maxCount: 1 },
-]), async (req, res, next) => {
+]), validateBike, async (req, res, next) => {
   try {
     const bikeId = Number(req.params.id);
     if (!Number.isInteger(bikeId) || bikeId < 1) return res.status(400).json({ error: "Invalid bike ID" });
@@ -48,7 +79,7 @@ router.put("/:id", upload.fields([
 router.post("/", upload.fields([
   { name: "bikePhotos", maxCount: 8 },
   { name: "rcDocument", maxCount: 1 },
-]), async (req, res, next) => {
+]), validateBike, async (req, res, next) => {
   try {
     const brand = String(req.body.brand || "").trim();
     const model = String(req.body.model || "").trim();
