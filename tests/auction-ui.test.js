@@ -50,13 +50,13 @@ test('restoring a dealer session shows running auction cards immediately and log
   assert.equal(s.element('dealerLogin').hidden,true);
   assert.equal(s.element('dealerHeading').textContent,'');
   assert.equal(s.element('dealerMsg').textContent,'');
-  assert.equal(s.element('accountMenuLabel').textContent,'Account');
+  assert.equal(s.element('accountMenuLabel').textContent,'☰ Menu');
   assert.match(s.element('dealerAuctions').innerHTML,/Honda Activa/);
   assert.match(s.element('dealerAuctions').innerHTML,/photo.jpg/);
   await s.element('dealerLogout').onclick();
   assert.ok(!s.document.body.classList.contains('dealer-mode'));
   assert.equal(s.element('dealerLogin').hidden,false);
-  assert.equal(s.element('accountMenuLabel').textContent,'Login');
+  assert.equal(s.element('accountMenuLabel').textContent,'☰ Menu');
 });
 
 test('card bidding retries a lost response with the same ID and includes swipeable photos',async()=>{
