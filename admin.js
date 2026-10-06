@@ -40,6 +40,9 @@
     });
   });
   function showDashboard(user) {
+    window.bkAdminPermissions=[];
+    hideDetailsPanel();
+    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
     document.querySelector?.(".admin-shell")?.classList.add("is-dashboard");
     loginPanel.classList.remove("active");
     dashboardPanel.classList.add("active");
@@ -50,6 +53,10 @@
   function showLogin(message = "") {
     document.querySelector?.(".admin-shell")?.classList.remove("is-dashboard");
     accessToken = null;
+    window.bkAdminPermissions=[];
+    hideDetailsPanel();
+    bikeList.innerHTML="";
+    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
     dashboardPanel.classList.remove("active");
     loginPanel.classList.add("active");
     loginMsg.textContent = message;
@@ -158,7 +165,7 @@
           <div class="bike-meta"><small>${b.kilometers_driven != null ? `${esc(b.kilometers_driven)} km` : "KM not added"}</small></div>
           <div><span class="status-pill">${esc(b.status)}</span></div>
           <div><button class="view-btn" type="button" data-view-bike="${esc(b.id)}">VIEW / EDIT</button></div>
-        </div><div class="inventory-sale">
+        </div><div class="inventory-sale" ${window.bkAdminPermissions&&!window.bkAdminPermissions.includes("owner")?"hidden":""}>
           <div><small>Recorded buyer</small>${esc(b.sale_profile?.buyerName||'Not recorded')}<br>${esc(b.sale_profile?.buyerBusiness||'')}<br>${esc(b.sale_profile?.buyerPhone||'')} ${esc(b.sale_profile?.buyerEmail||'')}</div>
           <div><small>Auction winner / dealer</small>${esc(b.buyer_name||'Not recorded')}<br>${esc(b.buyer_business||'')}<br>${esc(b.buyer_phone||'')} ${esc(b.buyer_email||'')}</div>
           <div><small>Sale date / delivered on</small>${esc(b.sale_profile?.saleDate||'Not recorded')} / ${esc(b.sale_profile?.deliveryDate||'Not recorded')}</div>

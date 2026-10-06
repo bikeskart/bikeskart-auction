@@ -1,8 +1,8 @@
 const {test,before,after}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path');
 Object.assign(process.env,{DB_HOST:'unused',DB_USER:'unused',DB_PASSWORD:'unused',DB_NAME:'unused',JWT_SECRET:'bulk-test-secret',NODE_ENV:'test'});
 const batches=new Map();let bikes=[],images=[],nextId=1,failImages=false,loseCommit=false,root,server,base,snapshot;
-const pool={async query(sql,p=[]){
- if(sql.startsWith('SELECT id,role,is_active,is_verified,admin_scopes'))return [[{id:p[0],role:Number(p[0])===9?'dealer':'admin',is_active:1,is_verified:1,admin_scopes:null}]];
+const pool={async query(sql,p=[]){if(sql.startsWith('SELECT CAST(id AS CHAR) AS setting_value FROM users'))return [[{setting_value:'1'}]];if(sql.startsWith('INSERT INTO admin_settings'))return [{}];
+ if(sql.startsWith('SELECT id,role,is_active,is_verified,admin_scopes'))return [[{id:p[0],role:Number(p[0])===9?'dealer':'admin',is_active:1,is_verified:1,admin_scopes:Number(p[0])===1?null:'["inventory"]'}]];
  if(sql.startsWith('INSERT INTO admin_activity'))return [{}];
  if(sql.startsWith('CREATE TABLE')||sql.startsWith('ALTER TABLE'))return [[]];if(sql.startsWith('SHOW COLUMNS'))return [[{Field:'detail_profile'}]];
  if(sql.startsWith('SELECT id FROM bike_import'))return [[]];

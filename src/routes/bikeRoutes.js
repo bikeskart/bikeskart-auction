@@ -36,15 +36,16 @@ router.get("/", async (req, res, next) => {
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
     const pageSize = Math.min(Math.max(parseInt(req.query.pageSize, 10) || 20, 1), 50);
     const status = req.query.status || undefined;
-    res.json(await listBikes({ status, search:String(req.query.search||" ").trim().slice(0,150), page, pageSize }));
+    const data=await listBikes({ status, includeBuyer:req.adminPermissions.includes("owner"), search:String(req.query.search||" ").trim().slice(0,150), page, pageSize });
+    res.json({...data,rows:data.rows.map(b=>require("../utils/adminOperations").privateBike(b,req.adminPermissions.includes("owner")))});
   } catch (err) { next(err); }
 });
 
-router.get("/:id/evidence/:filename", async(req,res,next)=>{
+router.get("/:id/evidence/:filename", requireAdminScope("owner"), async(req,res,next)=>{
  try{const bike=await getBikeById(req.params.id);const document=bike?.sale_profile?.documents?.find(d=>d.filename===req.params.filename);if(!document)return res.status(404).json({error:"Document not found"});res.set('Cache-Control','no-store');res.sendFile(require('path').join(upload.uploadRoot,'rc',document.filename),err=>{if(err)next(err);});}catch(err){next(err);}
 });
 
-router.get("/:id/rc", async (req, res, next) => {
+router.get("/:id/rc", requireAdminScope("owner"), async (req, res, next) => {
   try {
     const bike = await getBikeById(req.params.id);
     if (!bike || !bike.rc_document_url) return res.status(404).json({ error: "RC document not found" });
@@ -60,7 +61,7 @@ router.get("/:id", async (req, res, next) => {
   try {
     const bike = await getBikeById(req.params.id);
     if (!bike) return res.status(404).json({ error: "Bike not found" });
-    res.json({ bike });
+    res.json({ bike:require("../utils/adminOperations").privateBike(bike,req.adminPermissions.includes("owner")) });
   } catch (err) { next(err); }
 });
 
@@ -82,6 +83,7 @@ router.put("/:id", upload.fields([
     if (!allowedStatus.has(status)) return res.status(400).json({error:"Invalid bike status"});
     const photos=req.files?.bikePhotos||[]; const rc=req.files?.rcDocument?.[0];
     const sale=parseSale(req.body,existing.sale_profile);
+    if(!req.adminPermissions.includes('owner')&&(Object.keys(req.body).some(k=>['buyerName','buyerBusiness','buyerPhone','buyerEmail','saleDate','salePrice','paymentReceived','paymentMethod','paymentDate','paymentReference','deliveryDate'].includes(k))||req.files?.deliveryPhoto?.length||req.files?.saleReceipt?.length||req.files?.rcDocument?.length)){for(const files of Object.values(req.files||{}))for(const f of files)require('fs').unlink(f.path,()=>{});return res.status(403).json({error:'Only the main admin can change private sale, payment and delivery records'});}
     const accountFields=['buyerName','buyerBusiness','buyerPhone','buyerEmail','saleDate','salePrice','paymentReceived','paymentMethod','paymentDate','paymentReference'];
     if(accountFields.some(k=>String(sale[k]??'')!==String(existing.sale_profile?.[k]??''))&&!req.adminPermissions.includes('accounts'))return res.status(403).json({error:'Accounts access required to change buyer or payment details'});
     if(['salePrice','paymentReceived','paymentMethod','paymentDate','paymentReference'].some(k=>String(sale[k]??'')!==String(existing.sale_profile?.[k]??'')))sale.paymentConfirmed=false;
@@ -94,7 +96,7 @@ router.put("/:id", upload.fields([
     await addBikeImages(bikeId,photos.map(f=>`/uploads/bikes/${f.filename}`));
     if(rc) { const pool = require("../config/db"); await pool.query("UPDATE bikes SET rc_document_url = ? WHERE id = ?", [`/uploads/rc/${rc.filename}`, bikeId]); }
     await require("../utils/adminOperations").audit(require("../config/db"),req.user.sub,"bike.update",bikeId,{before:existing,after:await getBikeById(bikeId)});
-    res.json({bike:await getBikeById(bikeId)});
+    res.json({bike:require("../utils/adminOperations").privateBike(await getBikeById(bikeId),req.adminPermissions.includes("owner"))});
   } catch(err){next(err);}
 });
 
@@ -130,7 +132,7 @@ router.post("/", upload.fields([
     });
     await addBikeImages(bikeId, imageUrls);
     await require("../utils/adminOperations").audit(require("../config/db"),req.user.sub,"bike.create",bikeId,{brand,model,year});
-    res.status(201).json({ bike: await getBikeById(bikeId) });
+    res.status(201).json({ bike:require("../utils/adminOperations").privateBike(await getBikeById(bikeId),req.adminPermissions.includes("owner")) });
   } catch (err) { next(err); }
 });
 
