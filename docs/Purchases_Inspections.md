@@ -2,8 +2,8 @@
 
 The main admin (admin@bikeskart.com) uses the Purchases & Inspection Records tab for the purchase date, seller/customer mobile and KYC, bike details, location, purchase price, expenses, outgoing payments and receipts. Executives are created and enabled/disabled in the separate Executives tab. Other admins do not have access to purchase accounting or these private source records.
 
-1. Create a purchase record with customer name and mobile.
-2. Create an executive account with their personal email and a password of at least 12 characters. Assign the purchase to the executive.
+1. Create an executive account with their personal email and a password of at least 12 characters.
+2. In Purchases & Inspection Records, choose Assign new inspection. Enter only the vehicle registration number, customer mobile, Bengaluru zone (North, East, West, South or Central), and executive. The record and assignment are saved together. No customer name, purchase price or vehicle specifications are required at assignment. The executive completes those inspection details; purchase accounting remains with the main admin.
 3. The executive signs in at `/executive.html` (also `/executive`) and opens their assigned inspection. Record the vehicle, inspection checklist, actual inspection date/time, address and optionally current GPS coordinates.
 4. Save the inspection. Open the application camera, allow camera permission, and capture bike photos. Upload customer KYC and RC/NOC documents separately. Bike photos use a live camera preview rather than a gallery picker; up to 30 photos per inspection, with each upload limited to 8 MB.
 5. Submit for main-admin review. Submitted inspections are locked for executives; the main admin can return them by assigning them again before inventory approval.
