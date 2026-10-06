@@ -20,6 +20,7 @@
     dashboardPanel.classList.add("active");
     adminUser.textContent = `${user.full_name || user.email} • Administrator`;
     loadBikes();
+    window.dispatchEvent?.(new Event("bk-admin-ready"));
   }
   function showLogin(message = "") {
     accessToken = null;
@@ -66,6 +67,7 @@
     }
     return res;
   }
+  window.bkAdminApi = api;
   function esc(v) { return String(v ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
   function setValue(id, value) { document.getElementById(id).value = value ?? ""; }
   function showDetailsPanel() { bikeDetailsPanel.classList.add("active"); bikeDetailsPanel.scrollIntoView({behavior:"smooth", block:"start"}); }

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "db:migrate:auctions": "node scripts/migrateAuctions.js"
   },
   "engines": {
     "node": ">=18"
