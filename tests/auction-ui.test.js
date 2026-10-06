@@ -9,7 +9,7 @@ function screen(admin,fetcher){
   const document={body:{classList:{add:c=>classes.add(c),remove:c=>classes.delete(c),contains:c=>classes.has(c)}},hidden:false,getElementById(id){if(admin&&['dealerLogin'].includes(id)||!admin&&id==='auctionForm')return null;return element(id);},querySelectorAll(){return [];}};
   const window={addEventListener(type,fn){listeners[type]=fn;},bkAdminApi:fetcher};
   const formData=class {constructor(form){this.values=form.data||{};}*[Symbol.iterator](){yield*Object.entries(this.values);}};
-  const context={document,window,fetch:fetcher,Headers,FormData:formData,Intl,Date,console,crypto:require('node:crypto').webcrypto,setInterval(){}};
+  const context={document,window,fetch:fetcher,Headers,URLSearchParams,FormData:formData,Intl,Date,console,crypto:require('node:crypto').webcrypto,setInterval(){}};
   vm.runInNewContext(fs.readFileSync(require.resolve('../auction.js'),'utf8'),context);
   return {elements,element,listeners,document};
 }
@@ -33,7 +33,7 @@ test('a lost bid response retries the same request ID without a duplicate submis
     return response({rows:[lot],total:1,serverNow:new Date().toISOString()});
   });
   await new Promise(r=>setImmediate(r));
-  await s.element('dealerAuctions').onclick({target:{closest:()=>({dataset:{lot:'1'}})}});
+  await s.element('dealerAuctions').onclick({target:{closest:selector=>selector==='[data-lot]'?({dataset:{lot:'1'}}):null}});
   s.element('bidAmount').value='50000';const button={disabled:false};
   const event={preventDefault(){},submitter:button};await s.element('bidForm').onsubmit(event);await s.element('bidForm').onsubmit(event);
   assert.equal(sent.length,2);assert.equal(sent[0].requestId,sent[1].requestId);assert.match(s.element('bidMsg').textContent,/Bid accepted/);assert.equal(button.disabled,false);
@@ -54,4 +54,18 @@ test('restoring a dealer session shows running auction cards immediately and log
   await s.element('dealerLogout').onclick();
   assert.ok(!s.document.body.classList.contains('dealer-mode'));
   assert.equal(s.element('dealerLogin').hidden,false);
+});
+
+test('card bidding retries a lost response with the same ID and includes swipeable photos',async()=>{
+ let sent=[];const now=new Date().toISOString();
+ const s=screen(false,async(url,opts)=>{
+ if(url==='/api/auth/refresh')return response({accessToken:'token'});
+ if(url==='/api/auth/me')return response({user:{id:3,role:'dealer'}});
+ if(url.includes('/bids')){sent.push(JSON.parse(opts.body));if(sent.length===1)throw Error('Lost response');return response({amount:50000});}
+ return response({rows:[{id:1,bike_id:2,brand:'Honda',model:'Activa',phase:'live',starting_price:50000,min_increment:500,bid_count:0,starts_at:now,ends_at:now,images:[{image_url:'/one.jpg'},{image_url:'/two.jpg'}]}],total:1,serverNow:now});
+ });
+ await new Promise(r=>setImmediate(r));assert.match(s.element('dealerAuctions').innerHTML,/two.jpg/);assert.match(s.element('dealerAuctions').innerHTML,/data-gallery/);
+ const event={preventDefault(){},target:{dataset:{inlineBid:'1'},elements:{amount:{value:'50000'}}}};
+ await s.element('dealerAuctions').handlers.submit(event);await s.element('dealerAuctions').handlers.submit(event);
+ assert.equal(sent.length,2);assert.equal(sent[0].requestId,sent[1].requestId);assert.match(s.element('dealerAuctions').innerHTML,/Bid accepted/);
 });
