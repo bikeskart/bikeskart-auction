@@ -133,12 +133,14 @@
       detailMsg.textContent = "";
     } catch (e) { detailMsg.textContent = e.message; }
   }
+  let bikePage=1;
   async function loadBikes() {
     bikeList.textContent = "Loading…";
     try {
-      const res = await api("/api/admin/bikes?page=1&pageSize=20");
+      const res = await api("/api/admin/bikes?page="+bikePage+"&pageSize=20");
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not load bikes");
+      if(document.getElementById("bikePage")){document.getElementById("bikePage").textContent=`Page ${bikePage} of ${Math.max(1,Math.ceil(Number(data.total)/20))}`;document.getElementById("bikePrev").disabled=bikePage===1;document.getElementById("bikeNext").disabled=bikePage*20>=Number(data.total);}
       if (!data.rows?.length) { bikeList.innerHTML = '<div class="empty-state">No bikes added yet.</div>'; return; }
       bikeList.innerHTML = data.rows.map(b => `
         <div class="bike-row" data-bike-id="${esc(b.id)}">
@@ -150,6 +152,7 @@
         </div>`).join("");
     } catch (e) { bikeList.textContent = e.message; }
   }
+  for(const [id,delta] of [["bikePrev",-1],["bikeNext",1]])document.getElementById(id)?.addEventListener("click",()=>{bikePage+=delta;hideDetailsPanel();loadBikes();});
   bikeList.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-view-bike]");
     const row = e.target.closest("[data-bike-id]");
@@ -186,7 +189,7 @@
       if (!res.ok) throw new Error(data.error || "Could not save bike");
       bikeForm.reset();
       bikeMsg.textContent = `Bike #${data.bike.id} saved as draft.`;
-      await loadBikes();
+      bikePage=1;await loadBikes();
       window.dispatchEvent?.(new Event("bk-bikes-changed"));
     } catch (e) { bikeMsg.textContent = e.message; }
     finally { saveBikeBtn.disabled = false; }
