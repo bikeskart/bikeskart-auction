@@ -9,3 +9,21 @@
 
 .dealer-toolbar{margin-bottom:24px}.dealer-search{background:var(--white,#fff);padding:18px;border:1px solid #d7d9d0;border-radius:16px;margin-bottom:18px}.dealer-search>div,.dealer-search-options{display:flex;gap:10px;flex-wrap:wrap}.dealer-search input{min-width:0;flex:1}.dealer-search summary{cursor:pointer;margin-top:12px}.dealer-search-options{padding-top:12px}.card-gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:14px;background:#eef0e7;aspect-ratio:4/3;overscroll-behavior-x:contain}.gallery-slide{flex:0 0 100%;width:100%;height:100%;scroll-snap-align:start;display:flex;align-items:center;justify-content:center}.lot-card .gallery-slide img{width:100%;height:100%;object-fit:contain;border-radius:0;margin:0}.photo-missing{color:#5f655e;font-size:16px}.gallery-controls{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0 18px}.gallery-controls button{width:auto;padding:6px 14px}.gallery-controls span{font-size:12px;color:#5f655e}.card-bid-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px;background:#eef0e7;border-radius:12px}.card-bid-stats small,.card-bid-stats strong{display:block}.card-bid-stats strong{font-size:23px;margin-top:6px}.quick-bids{display:flex;gap:8px;margin:10px 0}.quick-bids button{flex:1;width:auto;padding:8px;font-size:13px}.inline-bid-controls{display:flex;gap:8px}.inline-bid-controls input{width:50%;min-width:0}.inline-bid-controls button{width:50%;background:#c8ff00;color:#10120f}.card-message{min-height:1.5em;font-size:14px}.lot-card form{margin-top:16px}.auction-filters{overflow-x:auto;flex-wrap:nowrap}.auction-filters button{white-space:nowrap;flex-shrink:0}
 .inline-bid-controls{flex-wrap:wrap}.inline-bid-controls input{flex:1;width:calc(100% - 110px)}.inline-bid-controls button[type="button"]{width:44px;padding:8px}.inline-bid-controls button[type="submit"]{width:100%}
+
+/* Compact dealer cards: one continuous vertical list. */
+#dealerAuctions{grid-template-columns:minmax(0,1fr);gap:16px;max-width:760px;margin-inline:auto}
+#dealerAuctions .lot-card{padding:16px}
+#dealerAuctions .card-gallery{aspect-ratio:4/3;max-height:320px}
+#dealerAuctions .card-bid-summary{display:flex;align-items:center;gap:10px;margin:12px 0}
+#dealerAuctions .card-bid-stats{flex:1;min-width:0;gap:10px;padding:10px;border-radius:8px}
+#dealerAuctions .card-bid-stats small{font-size:11px;line-height:1.4}
+#dealerAuctions .card-bid-stats strong{font-size:18px;line-height:1.25;margin-top:3px;overflow-wrap:anywhere}
+#dealerAuctions .card-details{width:auto;flex:0 0 84px;margin:0;padding:9px 6px;font-size:11px;line-height:1.4}
+#dealerAuctions .lot-card h3{font-size:20px;margin:8px 0}
+#dealerAuctions .lot-timer{font-size:16px}
+#dealerAuctions .lot-card form{margin-top:12px}
+#dealerAuctions .lot-card form>label{font-size:13px}
+#dealerAuctions .quick-bids button{margin-top:0;padding:8px;font-size:12px}
+#dealerAuctions .inline-bid-controls button{margin-top:0}
+#dealerAuctions .inline-bid-controls input{font-size:16px;padding:10px}
+#dealerAuctions .card-message{min-height:0;margin:8px 0 0}

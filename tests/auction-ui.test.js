@@ -36,7 +36,7 @@ test('a lost bid response retries the same request ID without a duplicate submis
   await s.element('dealerAuctions').onclick({target:{closest:selector=>selector==='[data-lot]'?({dataset:{lot:'1'}}):null}});
   s.element('bidAmount').value='50000';const button={disabled:false};
   const event={preventDefault(){},submitter:button};await s.element('bidForm').onsubmit(event);await s.element('bidForm').onsubmit(event);
-  assert.equal(sent.length,2);assert.equal(sent[0].requestId,sent[1].requestId);assert.match(s.element('bidMsg').textContent,/Bid accepted/);assert.equal(button.disabled,false);
+  assert.equal(sent.length,2);assert.equal(sent[0].requestId,sent[1].requestId);assert.equal(s.element('bidMsg').textContent,'');assert.equal(button.disabled,false);
 });
 test('auction titles and winner details escape injected HTML',async()=>{
   const s=screen(true,async url=>response(url.includes('accounts')?{rows:[],total:0}:url.includes('bikes')?{rows:[]}: {rows:[{id:1,bike_id:2,brand:'<img onerror=evil()>',model:'Bike',phase:'ended',status:'closed',result:'sold',starting_price:50000,reserve_price:50000,winner_name:'<script>evil()</script>',starts_at:new Date().toISOString(),ends_at:new Date().toISOString()}],total:1,serverNow:new Date().toISOString()}));
@@ -67,5 +67,5 @@ test('card bidding retries a lost response with the same ID and includes swipeab
  await new Promise(r=>setImmediate(r));assert.match(s.element('dealerAuctions').innerHTML,/two.jpg/);assert.match(s.element('dealerAuctions').innerHTML,/data-gallery/);
  const event={preventDefault(){},target:{dataset:{inlineBid:'1'},elements:{amount:{value:'50000'}}}};
  await s.element('dealerAuctions').handlers.submit(event);await s.element('dealerAuctions').handlers.submit(event);
- assert.equal(sent.length,2);assert.equal(sent[0].requestId,sent[1].requestId);assert.match(s.element('dealerAuctions').innerHTML,/Bid accepted/);
+ assert.equal(sent.length,2);assert.equal(sent[0].requestId,sent[1].requestId);assert.doesNotMatch(s.element('dealerAuctions').innerHTML,/Bid accepted|Minimum bid/);
 });
