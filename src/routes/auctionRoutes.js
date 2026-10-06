@@ -13,7 +13,7 @@ router.use((req,res,next) => users.findById(req.user.sub).then(user => {
 const admin = (req,res,next) => req.account.role === 'admin' ? next() : res.status(403).json({error:'Administrator access required'});
 router.get('/',asyncRoute(async (req,res) => {
   const page = Math.min(Math.max(parseInt(req.query.page,10)||1,1),10000);
-  res.json(await model.list(req.account,page));
+  res.json(await model.list(req.account,page,{phase:req.query.phase,search:req.query.search,brand:req.query.brand,maxPrice:req.query.maxPrice}));
 }));
 router.post('/',admin,asyncRoute(async (req,res) => res.status(201).json({auction:await model.create(req.body,req.account.id)})));
 router.get('/:id',asyncRoute(async (req,res) => res.json(await model.detail(positiveId(req.params.id),req.account))));
