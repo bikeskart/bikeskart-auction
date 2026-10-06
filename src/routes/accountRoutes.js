@@ -1,3 +1,4 @@
+const {requireAdminScope}=require("../middleware/adminPermissions");
 const express = require('express');
 const pool = require('../config/db');
 const {ensureDealerProfile}=require('../utils/dealerProfile');
@@ -6,6 +7,7 @@ const {findById} = require('../models/userModel');
 const {eligible,positiveId,fail} = require('../utils/auctionRules');
 const router = express.Router();
 router.use(requireAuth,(req,res,next) => findById(req.user.sub).then(u => {eligible(u,['admin']);next();}).catch(next));
+router.use(requireAdminScope("accounts"));
 router.get('/',async (req,res,next) => {
   try {
     await ensureDealerProfile(pool);
@@ -25,6 +27,7 @@ router.patch('/:id',async (req,res,next) => {
     if (!fields.length) fail('No account change provided');
     const [r] = await pool.query(`UPDATE users SET ${fields.join(',')} WHERE id = ? AND role IN ('dealer','bidder')`,[...values,id]);
     if (!r.affectedRows) fail('Dealer or bidder not found',404);
+    await require("../utils/adminOperations").audit(pool,req.user.sub,"dealer.update",id,Object.fromEntries(fields.map((f,i)=>[f.split(" ")[0],values[i]])));
     res.json({updated:true});
   } catch(e) {next(e);}
 });

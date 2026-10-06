@@ -115,6 +115,7 @@
       document.getElementById('saleDocuments').innerHTML=(b.sale_profile?.documents||[]).map(d=>`<p><button type="button" data-evidence-bike="${esc(b.id)}" data-evidence-file="${esc(d.filename)}">View ${d.kind==='deliveryPhoto'?'delivery photo':'sale receipt'}</button> · ${esc(d.uploadedAt||'')}</p>`).join('');
       for(const key of saleKeys)setValue("sale"+key[0].toUpperCase()+key.slice(1),b.sale_profile?.[key]);
       setValue("editFuelType", b.fuel_type); setValue("editStatus", b.status); setValue("editConditionNotes", b.condition_notes);
+      window.dispatchEvent?.(new CustomEvent("bk-admin-bike",{detail:b}));
       document.getElementById("detailsTitle").textContent = `${b.brand} ${b.model}`;
       document.getElementById("detailsSub").textContent = `Bike #${b.id} • ${b.status || "draft"}`;
       const photos = document.getElementById("existingPhotos");
@@ -163,7 +164,7 @@
           <div><small>Sale date / delivered on</small>${esc(b.sale_profile?.saleDate||'Not recorded')} / ${esc(b.sale_profile?.deliveryDate||'Not recorded')}</div>
           <div><small>Sale price / payment received (₹)</small>${esc(b.sale_profile?.salePrice??'Not recorded')} / ${esc(b.sale_profile?.paymentReceived??'Not recorded')}</div>
           <div><small>Payment method / date</small>${esc(b.sale_profile?.paymentMethod||'Not recorded')} / ${esc(b.sale_profile?.paymentDate||'Not recorded')}</div>
-          <div><small>Payment reference</small>${esc(b.sale_profile?.paymentReference||'Not recorded')}</div>
+          <div><small>Payment status / balance due (₹)</small>${esc(b.financial?.paymentStatus||"Not recorded")} / ${b.financial?.balance==null?"Not recorded":esc((b.financial.balance/100).toFixed(2))}</div><div><small>Total cost / profit (₹)</small>${b.financial?.totalCost==null?"Not recorded":esc((b.financial.totalCost/100).toFixed(2))} / ${b.financial?.profit==null?"Not recorded":esc((b.financial.profit/100).toFixed(2))}</div><div><small>Payment reference</small>${esc(b.sale_profile?.paymentReference||'Not recorded')}</div>
           <div><small>Delivery / sale evidence</small>${(b.sale_profile?.documents||[]).map(d=>`<button type="button" data-evidence-bike="${esc(b.id)}" data-evidence-file="${esc(d.filename)}">${d.kind==='deliveryPhoto'?'Delivery photo':'Sale receipt'}</button>`).join(' ')||'Not uploaded'}</div>
         </div></article>`).join("");
     } catch (e) { bikeList.textContent = e.message; }
@@ -184,7 +185,7 @@
     detailMsg.textContent = "Saving…"; updateBikeBtn.disabled = true;
     try {
       const fd = new FormData();
-      for(const key of saleKeys)fd.set(key,document.getElementById("sale"+key[0].toUpperCase()+key.slice(1)).value);
+      for(const key of saleKeys){const field=document.getElementById("sale"+key[0].toUpperCase()+key.slice(1));if(!field.disabled)fd.set(key,field.value);}
       for (const [field, id2] of [["brand","editBrand"],["model","editModel"],["year","editYear"],["registrationNumber","editRegistrationNumber"],["kilometersDriven","editKilometersDriven"],["ownershipCount","editOwnershipCount"],["fuelType","editFuelType"],["status","editStatus"],["conditionNotes","editConditionNotes"]]) fd.set(field, document.getElementById(id2).value.trim());
       for(const key of ["registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])fd.set(key,document.getElementById("edit"+key[0].toUpperCase()+key.slice(1)).value);
       for (const file of document.getElementById("editBikePhotos").files) fd.append("bikePhotos", file);

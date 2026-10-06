@@ -1,0 +1,4 @@
+const router=require('express').Router();const {requireAuth}=require('../middleware/auth');const {requireAdminScope}=require('../middleware/adminPermissions');const backups=require('../utils/adminBackups');const pool=require('../config/db');const {audit}=require('../utils/adminOperations');router.use(requireAuth,requireAdminScope('owner'));
+router.get('/',async(req,res,next)=>{try{res.json({...backups.status(),files:await backups.list()});}catch(e){next(e);}});
+router.post('/',async(req,res,next)=>{try{const result=await backups.backup(pool);await audit(pool,req.user.sub,'backup.create',result.name,{});res.json(result);}catch(e){next(e);}});
+router.get('/:name',async(req,res,next)=>{try{const files=await backups.list();if(!files.some(f=>f.name===req.params.name))return res.status(404).json({error:'Backup not found'});res.set('Cache-Control','no-store');res.download(require('path').join(backups.root,req.params.name));}catch(e){next(e);}});module.exports=router;

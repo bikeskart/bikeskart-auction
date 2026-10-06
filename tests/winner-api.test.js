@@ -1,5 +1,8 @@
 const {test,before,after}=require('node:test'),assert=require('node:assert/strict');Object.assign(process.env,{DB_HOST:'unused',DB_USER:'unused',DB_PASSWORD:'unused',DB_NAME:'unused',JWT_SECRET:'winner-test-secret',NODE_ENV:'test'});
 const winner={id:1,bike_id:2,winner_id:3,highest_bid:55000,brand:'Honda',model:'Activa',registration_number:'KA01AB1234',full_name:'Dealer',email:'dealer@example.com',phone:'9876543210',closed_at:new Date(),business_name:'Dealer Bikes'},contacts=new Map();const pool={query:async(sql,p=[])=>{
+ if(sql.startsWith('SELECT id,role,is_active,is_verified,admin_scopes'))return [[{id:p[0],role:Number(p[0])===9?'dealer':'admin',is_active:1,is_verified:1,admin_scopes:null}]];
+ if(sql.startsWith('ALTER TABLE'))return [{}];
+ if(sql.startsWith('INSERT INTO admin_activity'))return [{}];
  if(sql.startsWith('SHOW COLUMNS'))return [[{Field:'phone'},{Field:'business_name'},{Field:'gst_number'}]];
  if(sql.startsWith('CREATE TABLE'))return [{}];
  if(sql.startsWith('SELECT a.id')){assert.ok(sql.includes("a.status='closed' AND a.result='sold'"));return [[...(sql.includes('AND a.id=?')&&p[0]!==1?[]:[winner])]];}

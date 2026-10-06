@@ -43,6 +43,8 @@ app.use("/api/auth", authRoutes);
  * Admin routes
  */
 app.use("/api/admin", adminRoutes);
+app.use("/api/admin/operations", require("./src/routes/operationRoutes"));
+app.use("/api/admin/backups", require("./src/routes/backupRoutes"));
 
 /*
  * Admin bike routes
@@ -97,7 +99,7 @@ app.get("/health/db", async (req, res, next) => {
 /*
  * Serve the auction application itself.
  */
-for (const file of ["index.html", "admin.html", "style.css", "app.js", "admin.js", "auction.js", "auction.css"]) {
+for (const file of ["index.html", "admin.html", "style.css", "app.js", "admin.js", "admin-ops.js", "auction.js", "auction.css"]) {
   app.get(`/${file}`, (req, res) => res.sendFile(path.join(__dirname, file)));
 }
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
@@ -111,7 +113,7 @@ app.get("*", (req, res) => {
  */
 app.use((err, req, res, next) => {
   if (err.name === "MulterError") {
-    const message = err.code === "LIMIT_FILE_SIZE" ? "Each upload must be 8 MB or smaller." : err.code === "LIMIT_UNEXPECTED_FILE" || err.code === "LIMIT_FILE_COUNT" ? "Upload up to 8 bike photos and 1 RC document at a time." : "Could not accept the upload. Please check the selected files.";
+    const message = err.code === "LIMIT_FILE_SIZE" ? "Each upload must be 8 MB or smaller." : err.code === "LIMIT_UNEXPECTED_FILE" || err.code === "LIMIT_FILE_COUNT" ? "Upload up to 8 bike photos, 1 RC document, 1 delivery photo and 1 sale receipt at a time." : "Could not accept the upload. Please check the selected files.";
     return res.status(400).json({error:message});
   }
   if (err.expose === true && Number.isInteger(err.status) && err.status >= 400 && err.status < 500) return res.status(err.status).json({error:err.message});
@@ -139,6 +141,7 @@ if (require.main === module) app.listen(env.port, "0.0.0.0", () => {
   const sweep = () => auctions.closeDue().catch(err => {
     if (err.code !== 'ER_NO_SUCH_TABLE') console.error('Auction closing failed:', err.code || err.message);
   });
+  require("./src/utils/adminBackups").startScheduler(db);
   sweep();
   setInterval(sweep, 5000).unref();
 });

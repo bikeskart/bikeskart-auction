@@ -1,3 +1,4 @@
+const {requireAdminScope}=require("../middleware/adminPermissions");
 const {parseSale}=require("../utils/bikeSale");
 const express = require("express");
 const router = express.Router();
@@ -29,6 +30,7 @@ function validateBike(req, res, next) {
 
 router.use(requireAuth, requireRole("admin"));
 
+router.use(requireAdminScope("inventory"));
 router.get("/", async (req, res, next) => {
   try {
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
@@ -80,11 +82,18 @@ router.put("/:id", upload.fields([
     if (!allowedStatus.has(status)) return res.status(400).json({error:"Invalid bike status"});
     const photos=req.files?.bikePhotos||[]; const rc=req.files?.rcDocument?.[0];
     const sale=parseSale(req.body,existing.sale_profile);
+    const accountFields=['buyerName','buyerBusiness','buyerPhone','buyerEmail','saleDate','salePrice','paymentReceived','paymentMethod','paymentDate','paymentReference'];
+    if(accountFields.some(k=>String(sale[k]??'')!==String(existing.sale_profile?.[k]??''))&&!req.adminPermissions.includes('accounts'))return res.status(403).json({error:'Accounts access required to change buyer or payment details'});
+    if(['salePrice','paymentReceived','paymentMethod','paymentDate','paymentReference'].some(k=>String(sale[k]??'')!==String(existing.sale_profile?.[k]??'')))sale.paymentConfirmed=false;
+    if(req.files?.saleReceipt?.length)sale.receiptSigned=false;
+    const [[winning]]=await require('../config/db').query("SELECT highest_bid FROM auctions WHERE bike_id=? AND result='sold' ORDER BY id DESC LIMIT 1",[bikeId]);
     sale.documents=[...(existing.sale_profile?.documents||[])];
     for(const kind of ['deliveryPhoto','saleReceipt']){const file=req.files?.[kind]?.[0];if(file)sale.documents.push({kind,filename:file.filename,uploadedAt:new Date().toISOString(),uploadedBy:String(req.user.sub)});}
+    require("../utils/adminOperations").validateRelease(sale,winning?.highest_bid);
     await updateBike(bikeId,{brand,model,year,registration_number:String(req.body.registrationNumber||"").trim()||null,kilometers_driven:req.body.kilometersDriven===""?null:Number(req.body.kilometersDriven),ownership_count:req.body.ownershipCount===""?null:Number(req.body.ownershipCount),fuel_type:String(req.body.fuelType||"").trim()||null,condition_notes:String(req.body.conditionNotes||"").trim()||null,detail_profile:JSON.stringify(parseProfile(req.body,existing.detail_profile)),sale_profile:JSON.stringify(sale),status});
     await addBikeImages(bikeId,photos.map(f=>`/uploads/bikes/${f.filename}`));
     if(rc) { const pool = require("../config/db"); await pool.query("UPDATE bikes SET rc_document_url = ? WHERE id = ?", [`/uploads/rc/${rc.filename}`, bikeId]); }
+    await require("../utils/adminOperations").audit(require("../config/db"),req.user.sub,"bike.update",bikeId,{before:existing,after:await getBikeById(bikeId)});
     res.json({bike:await getBikeById(bikeId)});
   } catch(err){next(err);}
 });
@@ -120,6 +129,7 @@ router.post("/", upload.fields([
       detailProfile:parseProfile(req.body),
     });
     await addBikeImages(bikeId, imageUrls);
+    await require("../utils/adminOperations").audit(require("../config/db"),req.user.sub,"bike.create",bikeId,{brand,model,year});
     res.status(201).json({ bike: await getBikeById(bikeId) });
   } catch (err) { next(err); }
 });

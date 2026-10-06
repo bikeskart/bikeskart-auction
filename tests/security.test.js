@@ -7,6 +7,9 @@ const dbPath = require.resolve('../src/config/db');
 const queries = [];
 require.cache[dbPath] = { id:dbPath, filename:dbPath, loaded:true, exports:{
   query:async (sql, params) => {
+    if(sql.startsWith("SELECT id,role,is_active,is_verified,admin_scopes"))return [[{id:1,role:"admin",is_active:1,is_verified:1,admin_scopes:null}]];
+    if(sql.startsWith("SHOW COLUMNS FROM users"))return [[{Field:"admin_scopes"}]];
+    if(sql.startsWith("CREATE TABLE IF NOT EXISTS admin_")||sql.startsWith("CREATE TABLE IF NOT EXISTS auction_confirmations"))return [[]];
     queries.push({sql,params});
     if (sql.startsWith('SELECT * FROM bikes')) return [[{id:1,rc_document_url:'/uploads/rc/regression.pdf'}]];
     if (sql.startsWith('SELECT id, image_url')) return [[]];

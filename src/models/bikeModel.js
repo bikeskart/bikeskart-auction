@@ -85,7 +85,7 @@ async function listBikes({ status, search="", page = 1, pageSize = 20 } = {}) {
     [...params, pageSize, offset]
   );
   const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM bikes b ${join} ${where}`, params);
-  return { rows:rows.map(b=>({...b,sale_profile:readSale(b.sale_profile)})), total, page, pageSize };
+  return { rows:rows.map(b=>({...b,sale_profile:readSale(b.sale_profile),financial:require("../utils/adminOperations").financial(readSale(b.sale_profile),b.winning_price)})), total, page, pageSize };
 }
 
 async function updateBike(bikeId, fields) {

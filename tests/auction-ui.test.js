@@ -39,7 +39,7 @@ test('a lost bid response retries the same request ID without a duplicate submis
   assert.equal(sent.length,2);assert.equal(sent[0].requestId,sent[1].requestId);assert.equal(s.element('bidMsg').textContent,'');assert.equal(button.disabled,false);
 });
 test('auction titles and winner details escape injected HTML',async()=>{
-  const s=screen(true,async url=>response(url.includes('accounts')?{rows:[],total:0}:url.includes('bikes')?{rows:[]}: {rows:[{id:1,bike_id:2,brand:'<img onerror=evil()>',model:'Bike',phase:'ended',status:'closed',result:'sold',starting_price:50000,reserve_price:50000,winner_name:'<script>evil()</script>',starts_at:new Date().toISOString(),ends_at:new Date().toISOString()}],total:1,serverNow:new Date().toISOString()}));
+  const s=screen(true,async url=>response(url.endsWith('/access')?{scopes:['inventory','accounts','auctions']}:url.includes('accounts')?{rows:[],total:0}:url.includes('bikes')?{rows:[]}: {rows:[{id:1,bike_id:2,brand:'<img onerror=evil()>',model:'Bike',phase:'ended',status:'closed',result:'sold',starting_price:50000,reserve_price:50000,winner_name:'<script>evil()</script>',starts_at:new Date().toISOString(),ends_at:new Date().toISOString()}],total:1,serverNow:new Date().toISOString()}));
   await s.listeners['bk-admin-ready']();const html=s.element('adminAuctions').innerHTML;assert.ok(html.includes('&lt;script&gt;'));assert.ok(!html.includes('<script>'));assert.ok(html.includes('&lt;img onerror=evil()&gt;'));
 });
 test('restoring a dealer session shows running auction cards immediately and logout restores homepage',async()=>{
@@ -72,3 +72,4 @@ test('card bidding retries a lost response with the same ID and includes swipeab
  await s.element('dealerAuctions').handlers.submit(event);await s.element('dealerAuctions').handlers.submit(event);
  assert.equal(sent.length,2);assert.equal(sent[0].requestId,sent[1].requestId);assert.doesNotMatch(s.element('dealerAuctions').innerHTML,/Bid accepted|Minimum bid/);
 });
+test('accounts-only staff initialization skips auction and bike-option requests',async()=>{const requested=[];const s=screen(true,async url=>{requested.push(url);return response(url.endsWith('/access')?{scopes:['accounts']}:{rows:[],total:0});});await s.listeners['bk-admin-ready']();assert.ok(requested.some(url=>url.includes('/accounts')));assert.ok(!requested.some(url=>url.startsWith('/api/auctions')));assert.ok(!requested.some(url=>url.includes('/bike-options')));});
