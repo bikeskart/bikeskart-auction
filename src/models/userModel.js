@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const {ensureDealerProfile} = require("../utils/dealerProfile");
 
 async function findByEmail(email) {
   const [rows] = await db.execute(
@@ -19,27 +20,16 @@ async function findById(id) {
 }
 
 async function createUser({ role, fullName, email, phone, passwordHash, businessName, gstNumber }) {
-  // Try the full Stage-1 profile first. If the already-created database uses
-  // the leaner users table, fall back to the common core columns.
-  try {
-    const [result] = await db.execute(
-      `INSERT INTO users
-       (role, full_name, email, phone, password_hash, business_name, gst_number, is_verified, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)`,
-      [role, fullName, email, phone || null, passwordHash,
-       role === "dealer" ? (businessName || null) : null,
-       role === "dealer" ? (gstNumber || null) : null]
-    );
-    return findById(result.insertId);
-  } catch (err) {
-    if (err && err.code !== "ER_BAD_FIELD_ERROR" && err && err.code !== "ER_BAD_COLUMN_ERROR") throw err;
-    const [result] = await db.execute(
-      `INSERT INTO users (role, full_name, email, password_hash, is_verified, is_active)
-       VALUES (?, ?, ?, ?, 0, 1)`,
-      [role, fullName, email, passwordHash]
-    );
-    return findById(result.insertId);
-  }
+  await ensureDealerProfile(db);
+  const [result] = await db.execute(
+    `INSERT INTO users
+     (role, full_name, email, phone, password_hash, business_name, gst_number, is_verified, is_active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)`,
+    [role, fullName, email, phone || null, passwordHash,
+     role === "dealer" ? (businessName || null) : null,
+     role === "dealer" ? (gstNumber || null) : null]
+  );
+  return findById(result.insertId);
 }
 
 async function updateLastLogin(id) {
