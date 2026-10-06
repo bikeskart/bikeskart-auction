@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const {parseProfile}=require("../utils/bikeProfile");
 const { requireAuth, requireRole } = require("../middleware/auth");
 const upload = require("../middleware/upload");
 const { createBike, addBikeImages, getBikeById, listBikes, updateBike } = require("../models/bikeModel");
@@ -20,6 +21,8 @@ function validateBike(req, res, next) {
     if (value == null) req.body[key] = "";
   }
   if (req.method === "PUT" && !["draft", "ready", "in_auction", "sold", "unsold"].includes(req.body.status || "draft")) return fail("Invalid bike status");
+  try{parseProfile(req.body);}catch(e){return fail(e.message);}
+  if(String(req.body.conditionNotes||'').length>10000)return fail("Description is too long");
   next();
 }
 
@@ -69,7 +72,7 @@ router.put("/:id", upload.fields([
     const allowedStatus = new Set(["draft","ready","in_auction","sold","unsold"]);
     if (!allowedStatus.has(status)) return res.status(400).json({error:"Invalid bike status"});
     const photos=req.files?.bikePhotos||[]; const rc=req.files?.rcDocument?.[0];
-    await updateBike(bikeId,{brand,model,year,registration_number:String(req.body.registrationNumber||"").trim()||null,kilometers_driven:req.body.kilometersDriven===""?null:Number(req.body.kilometersDriven),ownership_count:req.body.ownershipCount===""?null:Number(req.body.ownershipCount),fuel_type:String(req.body.fuelType||"").trim()||null,condition_notes:String(req.body.conditionNotes||"").trim()||null,status});
+    await updateBike(bikeId,{brand,model,year,registration_number:String(req.body.registrationNumber||"").trim()||null,kilometers_driven:req.body.kilometersDriven===""?null:Number(req.body.kilometersDriven),ownership_count:req.body.ownershipCount===""?null:Number(req.body.ownershipCount),fuel_type:String(req.body.fuelType||"").trim()||null,condition_notes:String(req.body.conditionNotes||"").trim()||null,detail_profile:JSON.stringify(parseProfile(req.body,existing.detail_profile)),status});
     await addBikeImages(bikeId,photos.map(f=>`/uploads/bikes/${f.filename}`));
     if(rc) { const pool = require("../config/db"); await pool.query("UPDATE bikes SET rc_document_url = ? WHERE id = ?", [`/uploads/rc/${rc.filename}`, bikeId]); }
     res.json({bike:await getBikeById(bikeId)});
@@ -104,6 +107,7 @@ router.post("/", upload.fields([
       fuelType: String(req.body.fuelType || "").trim() || null,
       conditionNotes: String(req.body.conditionNotes || "").trim() || null,
       rcDocumentUrl,
+      detailProfile:parseProfile(req.body),
     });
     await addBikeImages(bikeId, imageUrls);
     res.status(201).json({ bike: await getBikeById(bikeId) });

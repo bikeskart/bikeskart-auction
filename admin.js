@@ -105,6 +105,8 @@
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not load bike");
       const b = data.bike;
+      const profile=typeof b.detail_profile==='string'?JSON.parse(b.detail_profile):b.detail_profile||{};
+      for(const key of ["registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])setValue("edit"+key[0].toUpperCase()+key.slice(1),profile[key]);
       setValue("editBikeId", b.id); setValue("editBrand", b.brand); setValue("editModel", b.model);
       setValue("editYear", b.year); setValue("editRegistrationNumber", b.registration_number);
       setValue("editKilometersDriven", b.kilometers_driven); setValue("editOwnershipCount", b.ownership_count);
@@ -163,6 +165,7 @@
     try {
       const fd = new FormData();
       for (const [field, id2] of [["brand","editBrand"],["model","editModel"],["year","editYear"],["registrationNumber","editRegistrationNumber"],["kilometersDriven","editKilometersDriven"],["ownershipCount","editOwnershipCount"],["fuelType","editFuelType"],["status","editStatus"],["conditionNotes","editConditionNotes"]]) fd.set(field, document.getElementById(id2).value.trim());
+      for(const key of ["registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])fd.set(key,document.getElementById("edit"+key[0].toUpperCase()+key.slice(1)).value);
       for (const file of document.getElementById("editBikePhotos").files) fd.append("bikePhotos", file);
       const rc = document.getElementById("editRcDocument").files[0]; if (rc) fd.append("rcDocument", rc);
       const res = await api(`/api/admin/bikes/${encodeURIComponent(id)}`, {method:"PUT", body:fd});

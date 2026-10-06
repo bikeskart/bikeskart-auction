@@ -95,3 +95,14 @@ test('production shows auction rule errors while hiding unexpected server errors
     assert.equal(res.status,500);assert.equal((await res.json()).error,'Something went wrong');
   } finally {env.nodeEnv=originals.nodeEnv;users.findById=originals.findById;auctions.create=originals.create;}
 });
+
+test('admin bike create and edit persist validated inspection fields',async()=>{
+ for(const method of ['POST','PUT']){
+  queries.length=0;const form=new FormData();Object.entries({brand:'Honda',model:'Activa',year:'2024',status:'draft',registrationYear:'2025',hpStatus:'No',keysCount:'0',engineCondition:'Good',vehicleRating:'4'}).forEach(([k,v])=>form.set(k,v));
+  const res=await fetch(base+'/api/admin/bikes'+(method==='PUT'?'/1':''),{method,headers:bearer('admin'),body:form});assert.equal(res.status,method==='POST'?201:200);
+  const write=queries.find(q=>q.sql.startsWith(method==='POST'?'INSERT INTO bikes':'UPDATE bikes'));assert.ok(write.sql.includes('detail_profile'));const profile=write.params.find(v=>typeof v==='string'&&v.startsWith('{'));assert.deepEqual(JSON.parse(profile),{registrationYear:2025,hpStatus:'No',keysCount:0,engineCondition:'Good',vehicleRating:4});
+ }
+});
+test('invalid inspection is rejected before bike database writes',async()=>{
+ queries.length=0;const form=new FormData();Object.entries({brand:'Honda',model:'Activa',year:'2024',vehicleRating:'9'}).forEach(([k,v])=>form.set(k,v));const res=await fetch(base+'/api/admin/bikes',{method:'POST',headers:bearer('admin'),body:form});assert.equal(res.status,400);assert.equal(queries.length,0);
+});

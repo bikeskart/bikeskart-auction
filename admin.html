@@ -97,14 +97,30 @@
 <div class="bike-form-grid">
 <div class="bike-field"><label for="brand">Brand *</label><input id="brand" name="brand" required placeholder="Royal Enfield"></div>
 <div class="bike-field"><label for="model">Model *</label><input id="model" name="model" required placeholder="Classic 350"></div>
-<div class="bike-field"><label for="year">Year *</label><input id="year" name="year" type="number" min="1950" max="2100" required placeholder="2024"></div>
+<div class="bike-field"><label for="year">Manufacturing Year *</label><input id="year" name="year" type="number" min="1950" max="2100" required placeholder="2024"></div>
 <div class="bike-field"><label for="registrationNumber">Registration Number</label><input id="registrationNumber" name="registrationNumber" placeholder="KA01AB1234"></div>
 <div class="bike-field"><label for="kilometersDriven">Kilometres</label><input id="kilometersDriven" name="kilometersDriven" type="number" min="0" placeholder="12500"></div>
 <div class="bike-field"><label for="ownershipCount">Ownership Count</label><input id="ownershipCount" name="ownershipCount" type="number" min="1" max="255" placeholder="1"></div>
 <div class="bike-field"><label for="fuelType">Fuel Type</label><select id="fuelType" name="fuelType"><option value="">Select</option><option>Petrol</option><option>Electric</option><option>Other</option></select></div>
 <div class="bike-field"><label for="rcDocument">RC Document</label><input id="rcDocument" name="rcDocument" type="file" accept="application/pdf,image/jpeg,image/png,image/webp"><div class="file-help">PDF/JPG/PNG/WEBP · max 8 MB</div></div>
 <div class="bike-field full"><label for="bikePhotos">Bike Photos</label><input id="bikePhotos" name="bikePhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple><div class="file-help">Up to 8 photos · JPG/PNG/WEBP · max 8 MB each</div></div>
-<div class="bike-field full"><label for="conditionNotes">Condition Notes</label><textarea id="conditionNotes" name="conditionNotes" placeholder="Describe overall condition, service history, tyres, accessories, etc."></textarea></div>
+<div class="bike-field full"><h3>Vehicle Information</h3></div><div class="bike-field"><label for="registrationYear">Registration Year</label><input id="registrationYear" name="registrationYear" type="number" min="1950" max="2100" step="1" placeholder="Not recorded"></div>
+<div class="bike-field"><label for="hpStatus">HP Status</label><select id="hpStatus" name="hpStatus"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="bike-field"><label for="nocStatus">NOC Status</label><select id="nocStatus" name="nocStatus"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="bike-field"><label for="rcAvailable">RC Available</label><select id="rcAvailable" name="rcAvailable"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="bike-field"><label for="keysCount">Number of Keys</label><input id="keysCount" name="keysCount" type="number" min="0" max="10" step="1" placeholder="Not recorded"></div>
+<div class="bike-field"><label for="insuranceStatus">Insurance</label><select id="insuranceStatus" name="insuranceStatus"><option value="">Not recorded</option><option>Valid</option><option>Invalid</option></select></div>
+<div class="bike-field full"><h3>Inspection</h3></div><div class="bike-field"><label for="engineNoise">Engine Noise</label><select id="engineNoise" name="engineNoise"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="bike-field"><label for="smoke">Smoke</label><select id="smoke" name="smoke"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="bike-field"><label for="selfStart">Self Start</label><select id="selfStart" name="selfStart"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="bike-field"><label for="clutchPlate">Clutch Plate</label><select id="clutchPlate" name="clutchPlate"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
+<div class="bike-field"><label for="timingChainNoise">Timing Chain Noise</label><select id="timingChainNoise" name="timingChainNoise"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="bike-field"><label for="engineCondition">Engine Condition</label><select id="engineCondition" name="engineCondition"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
+<div class="bike-field"><label for="batteryWorking">Battery Working</label><select id="batteryWorking" name="batteryWorking"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="bike-field"><label for="chassis">Chassis</label><select id="chassis" name="chassis"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
+<div class="bike-field"><label for="bodyLine">Body Line</label><select id="bodyLine" name="bodyLine"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
+<div class="bike-field"><label for="vehicleRating">Vehicle Rating (1–5)</label><input id="vehicleRating" name="vehicleRating" type="number" min="1" max="5" step="1" placeholder="Not recorded"></div>
+<div class="bike-field full"><label for="conditionNotes">Description / Condition Notes</label><textarea id="conditionNotes" name="conditionNotes" placeholder="Describe overall condition, service history, tyres, accessories, etc."></textarea></div>
 </div>
 <div class="bike-form-actions"><button class="main-btn" type="submit" id="saveBikeBtn">SAVE BIKE →</button><span class="bike-msg" id="bikeMsg"></span></div>
 </form>
@@ -115,13 +131,29 @@
 <div class="details-grid">
 <div class="details-field"><label for="editBrand">Brand *</label><input id="editBrand" required></div>
 <div class="details-field"><label for="editModel">Model *</label><input id="editModel" required></div>
-<div class="details-field"><label for="editYear">Year *</label><input id="editYear" type="number" min="1950" max="2100" required></div>
+<div class="details-field"><label for="editYear">Manufacturing Year *</label><input id="editYear" type="number" min="1950" max="2100" required></div>
 <div class="details-field"><label for="editRegistrationNumber">Registration Number</label><input id="editRegistrationNumber"></div>
 <div class="details-field"><label for="editKilometersDriven">Kilometres</label><input id="editKilometersDriven" type="number" min="0"></div>
 <div class="details-field"><label for="editOwnershipCount">Ownership Count</label><input id="editOwnershipCount" type="number" min="1" max="255"></div>
 <div class="details-field"><label for="editFuelType">Fuel Type</label><select id="editFuelType"><option value="">Select</option><option>Petrol</option><option>Electric</option><option>Other</option></select></div>
 <div class="details-field"><label for="editStatus">Status</label><select id="editStatus" class="status-select"><option value="draft">Draft</option><option value="ready">Ready</option><option value="in_auction">In Auction</option><option value="sold">Sold</option><option value="unsold">Unsold</option></select></div>
-<div class="details-field full"><label for="editConditionNotes">Condition Notes</label><textarea id="editConditionNotes"></textarea></div>
+<div class="details-field full"><h3>Vehicle Information</h3></div><div class="details-field"><label for="editRegistrationYear">Registration Year</label><input id="editRegistrationYear" name="registrationYear" type="number" min="1950" max="2100" step="1" placeholder="Not recorded"></div>
+<div class="details-field"><label for="editHpStatus">HP Status</label><select id="editHpStatus" name="hpStatus"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="details-field"><label for="editNocStatus">NOC Status</label><select id="editNocStatus" name="nocStatus"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="details-field"><label for="editRcAvailable">RC Available</label><select id="editRcAvailable" name="rcAvailable"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="details-field"><label for="editKeysCount">Number of Keys</label><input id="editKeysCount" name="keysCount" type="number" min="0" max="10" step="1" placeholder="Not recorded"></div>
+<div class="details-field"><label for="editInsuranceStatus">Insurance</label><select id="editInsuranceStatus" name="insuranceStatus"><option value="">Not recorded</option><option>Valid</option><option>Invalid</option></select></div>
+<div class="details-field full"><h3>Inspection</h3></div><div class="details-field"><label for="editEngineNoise">Engine Noise</label><select id="editEngineNoise" name="engineNoise"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="details-field"><label for="editSmoke">Smoke</label><select id="editSmoke" name="smoke"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="details-field"><label for="editSelfStart">Self Start</label><select id="editSelfStart" name="selfStart"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="details-field"><label for="editClutchPlate">Clutch Plate</label><select id="editClutchPlate" name="clutchPlate"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
+<div class="details-field"><label for="editTimingChainNoise">Timing Chain Noise</label><select id="editTimingChainNoise" name="timingChainNoise"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="details-field"><label for="editEngineCondition">Engine Condition</label><select id="editEngineCondition" name="engineCondition"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
+<div class="details-field"><label for="editBatteryWorking">Battery Working</label><select id="editBatteryWorking" name="batteryWorking"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
+<div class="details-field"><label for="editChassis">Chassis</label><select id="editChassis" name="chassis"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
+<div class="details-field"><label for="editBodyLine">Body Line</label><select id="editBodyLine" name="bodyLine"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
+<div class="details-field"><label for="editVehicleRating">Vehicle Rating (1–5)</label><input id="editVehicleRating" name="vehicleRating" type="number" min="1" max="5" step="1" placeholder="Not recorded"></div>
+<div class="details-field full"><label for="editConditionNotes">Description / Condition Notes</label><textarea id="editConditionNotes"></textarea></div>
 <div class="details-field full"><label>Existing Bike Photos</label><div id="existingPhotos" class="details-photos"></div><div class="details-note">Existing photos are kept. You can add more below.</div></div>
 <div class="details-field"><label for="editBikePhotos">Add Bike Photos</label><input id="editBikePhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple><div class="details-note">Up to 8 files per update · max 8 MB each</div></div>
 <div class="details-field"><label for="editRcDocument">Replace RC Document</label><input id="editRcDocument" type="file" accept="application/pdf,image/jpeg,image/png,image/webp"><div class="details-note" id="rcCurrent"></div></div>

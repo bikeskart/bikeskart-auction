@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const {ensureBikeProfile,readProfile}=require("../utils/bikeProfile");
 
 async function createBike({
   dealerId,
@@ -11,12 +12,14 @@ async function createBike({
   fuelType,
   conditionNotes,
   rcDocumentUrl,
+  detailProfile={},
 }) {
+  await ensureBikeProfile(pool);
   const [result] = await pool.query(
     `INSERT INTO bikes
       (dealer_id, brand, model, year, registration_number, kilometers_driven,
-       ownership_count, fuel_type, condition_notes, rc_document_url, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')`,
+       ownership_count, fuel_type, condition_notes, rc_document_url, detail_profile, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')`,
     [
       dealerId,
       brand,
@@ -28,6 +31,7 @@ async function createBike({
       fuelType || null,
       conditionNotes || null,
       rcDocumentUrl || null,
+      JSON.stringify(detailProfile),
     ]
   );
   return result.insertId;
@@ -50,7 +54,7 @@ async function getBikeById(bikeId) {
     "SELECT id, image_url, sort_order FROM bike_images WHERE bike_id = ? ORDER BY sort_order",
     [bikeId]
   );
-  return { ...bike, images };
+  return { ...bike, detail_profile:readProfile(bike.detail_profile), images };
 }
 
 async function listBikes({ status, page = 1, pageSize = 20 } = {}) {
@@ -74,7 +78,8 @@ async function listBikes({ status, page = 1, pageSize = 20 } = {}) {
 }
 
 async function updateBike(bikeId, fields) {
-  const allowed = ["brand","model","year","registration_number","kilometers_driven","ownership_count","fuel_type","condition_notes","status"];
+  await ensureBikeProfile(pool);
+  const allowed = ["brand","model","year","registration_number","kilometers_driven","ownership_count","fuel_type","condition_notes","detail_profile","status"];
   const setClauses=[]; const params=[];
   for (const [key,value] of Object.entries(fields)) { if (allowed.includes(key)) { setClauses.push(`${key} = ?`); params.push(value); } }
   if (!setClauses.length) return getBikeById(bikeId);
