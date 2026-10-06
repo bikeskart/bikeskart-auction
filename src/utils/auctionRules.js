@@ -1,5 +1,5 @@
 const MAX_PRICE = 1000000000;
-function fail(message, status = 400) { const error = new Error(message); error.status = status; throw error; }
+function fail(message, status = 400) { const error = new Error(message); error.status = status; error.expose = true; throw error; }
 function positiveId(value) {
   if (!/^[1-9]\d*$/.test(String(value)) || !Number.isSafeInteger(Number(value))) fail('Invalid ID');
   return Number(value);
