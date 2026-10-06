@@ -12,19 +12,7 @@ const bikeRoutes = require("./src/routes/bikeRoutes");
 
 const app = express();
 
-/*
- * Upload directory
- *
- * This MUST match the directory used by:
- * src/middleware/upload.js
- *
- * upload.js uses:
- * path.resolve(__dirname, "../../public_html/uploads")
- *
- * Since server.js is in the project root, the equivalent path is:
- * path.resolve(__dirname, "public_html/uploads")
- */
-const uploadRoot = path.resolve(__dirname, "uploads");
+const { uploadRoot } = require("./src/middleware/upload");
 app.use(helmet());
 
 app.use(
@@ -63,7 +51,8 @@ app.use("/api/admin/bikes", bikeRoutes);
  *
  * This now serves the SAME physical directory used by upload.js.
  */
-app.use("/uploads", express.static(uploadRoot));
+app.use("/uploads/bikes", express.static(path.join(uploadRoot, "bikes")));
+app.use("/uploads/rc", (req, res) => res.status(404).json({ error: "Not found" }));
 
 /*
  * Health check
@@ -95,10 +84,13 @@ app.get("/health/db", async (req, res, next) => {
 /*
  * Serve the auction application itself.
  */
-app.use(express.static(__dirname));
+for (const file of ["index.html", "admin.html", "style.css", "app.js", "admin.js"]) {
+  app.get(`/${file}`, (req, res) => res.sendFile(path.join(__dirname, file)));
+}
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.status(404).json({ error: "Not found" });
 });
 
 /*
@@ -122,8 +114,10 @@ app.use((err, req, res, next) => {
 /*
  * Start server
  */
-app.listen(env.port, "0.0.0.0", () => {
+if (require.main === module) app.listen(env.port, "0.0.0.0", () => {
   console.log(
     `BikesKart Auction running on port ${env.port} [${env.nodeEnv}]`
   );
 });
+
+module.exports = app;

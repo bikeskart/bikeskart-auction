@@ -8,14 +8,16 @@ const env = require("../config/env");
  */
 function signAccessToken(user) {
   return jwt.sign(
-    { sub: user.id, role: user.role, email: user.email },
+    { sub: user.id, role: user.role, email: user.email, token_use: "access" },
     env.jwt.accessSecret,
     { expiresIn: env.jwt.accessExpiresIn }
   );
 }
 
 function verifyAccessToken(token) {
-  return jwt.verify(token, env.jwt.accessSecret);
+  const payload = jwt.verify(token, env.jwt.accessSecret);
+  if (payload.token_use !== "access") throw new Error("Invalid token type");
+  return payload;
 }
 
 /**
@@ -25,13 +27,15 @@ function verifyAccessToken(token) {
  * never storing plaintext passwords.
  */
 function signRefreshToken(user) {
-  return jwt.sign({ sub: user.id }, env.jwt.refreshSecret, {
+  return jwt.sign({ sub: user.id, token_use: "refresh", jti: crypto.randomUUID() }, env.jwt.refreshSecret, {
     expiresIn: env.jwt.refreshExpiresIn,
   });
 }
 
 function verifyRefreshToken(token) {
-  return jwt.verify(token, env.jwt.refreshSecret);
+  const payload = jwt.verify(token, env.jwt.refreshSecret);
+  if (payload.token_use !== "refresh") throw new Error("Invalid token type");
+  return payload;
 }
 
 function hashToken(token) {

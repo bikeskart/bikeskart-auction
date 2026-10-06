@@ -51,10 +51,20 @@
     accessToken = data.accessToken;
     return true;
   }
+  let refreshing = null;
   async function api(url, options={}) {
     const headers = new Headers(options.headers || {});
     headers.set("Authorization", `Bearer ${accessToken}`);
-    return fetch(url, {...options, headers, credentials:"include"});
+    const send = () => fetch(url, {...options, headers, credentials:"include"});
+    let res = await send();
+    if (res.status === 401) {
+      if (!refreshing) refreshing = refreshSession().finally(() => { refreshing = null; });
+      if (await refreshing) {
+        headers.set("Authorization", `Bearer ${accessToken}`);
+        res = await send();
+      } else showLogin("Your session expired. Please log in again.");
+    }
+    return res;
   }
   function esc(v) { return String(v ?? "").replace(/[&<>'"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c])); }
   function setValue(id, value) { document.getElementById(id).value = value ?? ""; }
@@ -77,7 +87,20 @@
       const photos = document.getElementById("existingPhotos");
       photos.innerHTML = b.images?.length ? b.images.map(img => `<img src="${esc(img.image_url)}" alt="Bike photo">`).join("") : `<div class="details-note">No bike photos uploaded.</div>`;
       const rc = document.getElementById("rcCurrent");
-      rc.innerHTML = b.rc_document_url ? `<a href="${esc(b.rc_document_url)}" target="_blank" rel="noopener">Current RC document</a>` : "No RC document uploaded.";
+      rc.innerHTML = b.rc_document_url ? `<button type="button" class="admin-secondary" id="viewRcBtn">View RC document</button>` : "No RC document uploaded.";
+      document.getElementById("viewRcBtn")?.addEventListener("click", async () => {
+        const viewer = window.open("about:blank", "_blank");
+        if (viewer) viewer.opener = null;
+        try {
+          const response = await api(`/api/admin/bikes/${encodeURIComponent(b.id)}/rc`);
+          if (!response.ok) throw new Error("Could not open RC document");
+          const url = URL.createObjectURL(await response.blob());
+          if (viewer) viewer.location.href = url;
+          else { const link = document.createElement("a"); link.href = url; link.download = "RC-document"; link.click(); }
+        } catch (err) { viewer?.close(); detailMsg.textContent = err.message; }
+      });
+      document.getElementById("editBikePhotos").value = "";
+      document.getElementById("editRcDocument").value = "";
       detailMsg.textContent = "";
     } catch (e) { detailMsg.textContent = e.message; }
   }
