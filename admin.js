@@ -111,6 +111,9 @@
       setValue("editBikeId", b.id); setValue("editBrand", b.brand); setValue("editModel", b.model);
       setValue("editYear", b.year); setValue("editRegistrationNumber", b.registration_number);
       setValue("editKilometersDriven", b.kilometers_driven); setValue("editOwnershipCount", b.ownership_count);
+      document.getElementById('deliveryPhoto').value='';document.getElementById('saleReceipt').value='';
+      document.getElementById('saleDocuments').innerHTML=(b.sale_profile?.documents||[]).map(d=>`<p><button type="button" data-evidence-bike="${esc(b.id)}" data-evidence-file="${esc(d.filename)}">View ${d.kind==='deliveryPhoto'?'delivery photo':'sale receipt'}</button> · ${esc(d.uploadedAt||'')}</p>`).join('');
+      for(const key of saleKeys)setValue("sale"+key[0].toUpperCase()+key.slice(1),b.sale_profile?.[key]);
       setValue("editFuelType", b.fuel_type); setValue("editStatus", b.status); setValue("editConditionNotes", b.condition_notes);
       document.getElementById("detailsTitle").textContent = `${b.brand} ${b.model}`;
       document.getElementById("detailsSub").textContent = `Bike #${b.id} • ${b.status || "draft"}`;
@@ -134,26 +137,39 @@
       detailMsg.textContent = "";
     } catch (e) { detailMsg.textContent = e.message; }
   }
+  const saleKeys=["buyerName", "buyerBusiness", "buyerPhone", "buyerEmail", "saleDate", "deliveryDate", "salePrice", "paymentReceived", "paymentMethod", "paymentDate", "paymentReference"];
+  let inventoryQuery="";
+  document.getElementById("inventorySearchForm").addEventListener("submit",e=>{e.preventDefault();inventoryQuery=document.getElementById("inventorySearch").value.trim();bikePage=1;loadBikes();});
+  document.getElementById("inventoryClear").addEventListener("click",()=>{document.getElementById("inventorySearch").value="";inventoryQuery="";bikePage=1;loadBikes();});
   let bikePage=1;
   async function loadBikes() {
     bikeList.textContent = "Loading…";
     try {
-      const res = await api("/api/admin/bikes?page="+bikePage+"&pageSize=20");
+      const res = await api("/api/admin/bikes?page="+bikePage+"&pageSize=20&search="+encodeURIComponent(inventoryQuery));
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not load bikes");
       if(document.getElementById("bikePage")){document.getElementById("bikePage").textContent=`Page ${bikePage} of ${Math.max(1,Math.ceil(Number(data.total)/20))}`;document.getElementById("bikePrev").disabled=bikePage===1;document.getElementById("bikeNext").disabled=bikePage*20>=Number(data.total);}
-      if (!data.rows?.length) { bikeList.innerHTML = '<div class="empty-state">No bikes added yet.</div>'; return; }
+      if (!data.rows?.length) { bikeList.innerHTML = '<div class="empty-state">No matching bikes.</div>'; return; }
       bikeList.innerHTML = data.rows.map(b => `
-        <div class="bike-row" data-bike-id="${esc(b.id)}">
+        <article class="inventory-card"><div class="bike-row" data-bike-id="${esc(b.id)}">
           ${b.cover_image ? `<img class="bike-thumb" src="${esc(b.cover_image)}" alt="">` : `<div class="bike-thumb"></div>`}
-          <div class="bike-meta"><b>${esc(b.brand)} ${esc(b.model)}</b><small>${esc(b.year)}${b.registration_number ? ` · ${esc(b.registration_number)}` : ""}</small></div>
+          <div class="bike-meta"><b>#${esc(b.id)} · ${esc(b.brand)} ${esc(b.model)}</b><small>${esc(b.year)}${b.registration_number ? ` · ${esc(b.registration_number)}` : ""}</small></div>
           <div class="bike-meta"><small>${b.kilometers_driven != null ? `${esc(b.kilometers_driven)} km` : "KM not added"}</small></div>
           <div><span class="status-pill">${esc(b.status)}</span></div>
           <div><button class="view-btn" type="button" data-view-bike="${esc(b.id)}">VIEW / EDIT</button></div>
-        </div>`).join("");
+        </div><div class="inventory-sale">
+          <div><small>Recorded buyer</small>${esc(b.sale_profile?.buyerName||'Not recorded')}<br>${esc(b.sale_profile?.buyerBusiness||'')}<br>${esc(b.sale_profile?.buyerPhone||'')} ${esc(b.sale_profile?.buyerEmail||'')}</div>
+          <div><small>Auction winner / dealer</small>${esc(b.buyer_name||'Not recorded')}<br>${esc(b.buyer_business||'')}<br>${esc(b.buyer_phone||'')} ${esc(b.buyer_email||'')}</div>
+          <div><small>Sale date / delivered on</small>${esc(b.sale_profile?.saleDate||'Not recorded')} / ${esc(b.sale_profile?.deliveryDate||'Not recorded')}</div>
+          <div><small>Sale price / payment received (₹)</small>${esc(b.sale_profile?.salePrice??'Not recorded')} / ${esc(b.sale_profile?.paymentReceived??'Not recorded')}</div>
+          <div><small>Payment method / date</small>${esc(b.sale_profile?.paymentMethod||'Not recorded')} / ${esc(b.sale_profile?.paymentDate||'Not recorded')}</div>
+          <div><small>Payment reference</small>${esc(b.sale_profile?.paymentReference||'Not recorded')}</div>
+          <div><small>Delivery / sale evidence</small>${(b.sale_profile?.documents||[]).map(d=>`<button type="button" data-evidence-bike="${esc(b.id)}" data-evidence-file="${esc(d.filename)}">${d.kind==='deliveryPhoto'?'Delivery photo':'Sale receipt'}</button>`).join(' ')||'Not uploaded'}</div>
+        </div></article>`).join("");
     } catch (e) { bikeList.textContent = e.message; }
   }
   for(const [id,delta] of [["bikePrev",-1],["bikeNext",1]])document.getElementById(id)?.addEventListener("click",()=>{bikePage+=delta;hideDetailsPanel();loadBikes();});
+  document.getElementById('bikeInventoryTab').addEventListener('click',async e=>{const btn=e.target.closest('[data-evidence-file]');if(!btn)return;e.stopPropagation();try{const response=await api(`/api/admin/bikes/${encodeURIComponent(btn.dataset.evidenceBike)}/evidence/${encodeURIComponent(btn.dataset.evidenceFile)}`);if(!response.ok)throw new Error('Could not open document');const url=URL.createObjectURL(await response.blob());const a=document.createElement('a');a.href=url;a.download=btn.dataset.evidenceFile;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}catch(err){alert(err.message);}});
   bikeList.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-view-bike]");
     const row = e.target.closest("[data-bike-id]");
@@ -168,9 +184,11 @@
     detailMsg.textContent = "Saving…"; updateBikeBtn.disabled = true;
     try {
       const fd = new FormData();
+      for(const key of saleKeys)fd.set(key,document.getElementById("sale"+key[0].toUpperCase()+key.slice(1)).value);
       for (const [field, id2] of [["brand","editBrand"],["model","editModel"],["year","editYear"],["registrationNumber","editRegistrationNumber"],["kilometersDriven","editKilometersDriven"],["ownershipCount","editOwnershipCount"],["fuelType","editFuelType"],["status","editStatus"],["conditionNotes","editConditionNotes"]]) fd.set(field, document.getElementById(id2).value.trim());
       for(const key of ["registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])fd.set(key,document.getElementById("edit"+key[0].toUpperCase()+key.slice(1)).value);
       for (const file of document.getElementById("editBikePhotos").files) fd.append("bikePhotos", file);
+      for(const kind of ["deliveryPhoto","saleReceipt"]){const file=document.getElementById(kind).files[0];if(file)fd.append(kind,file);}
       const rc = document.getElementById("editRcDocument").files[0]; if (rc) fd.append("rcDocument", rc);
       const res = await api(`/api/admin/bikes/${encodeURIComponent(id)}`, {method:"PUT", body:fd});
       const data = await res.json().catch(() => ({}));
