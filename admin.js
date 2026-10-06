@@ -15,7 +15,31 @@
   const updateBikeBtn = document.getElementById("updateBikeBtn");
   const detailMsg = document.getElementById("detailMsg");
 
+  const tabs = [...(document.querySelectorAll?.('[role="tab"]') || [])];
+  function selectTab(tab) {
+    for (const item of tabs) {
+      const active = item === tab;
+      item.classList.toggle("active", active);
+      item.setAttribute("aria-selected", String(active));
+      item.tabIndex = active ? 0 : -1;
+      document.getElementById(item.getAttribute("aria-controls")).hidden = !active;
+    }
+    window.dispatchEvent?.(new Event("bk-admin-tab"));
+  }
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => selectTab(tab));
+    tab.addEventListener("keydown", event => {
+      let next;
+      if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+      if (event.key === "ArrowLeft") next = (index + tabs.length - 1) % tabs.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = tabs.length - 1;
+      if (next == null) return;
+      event.preventDefault(); selectTab(tabs[next]); tabs[next].focus();
+    });
+  });
   function showDashboard(user) {
+    document.querySelector?.(".admin-shell")?.classList.add("is-dashboard");
     loginPanel.classList.remove("active");
     dashboardPanel.classList.add("active");
     adminUser.textContent = `${user.full_name || user.email} • Administrator`;
@@ -23,6 +47,7 @@
     window.dispatchEvent?.(new Event("bk-admin-ready"));
   }
   function showLogin(message = "") {
+    document.querySelector?.(".admin-shell")?.classList.remove("is-dashboard");
     accessToken = null;
     dashboardPanel.classList.remove("active");
     loginPanel.classList.add("active");
@@ -159,6 +184,7 @@
       bikeForm.reset();
       bikeMsg.textContent = `Bike #${data.bike.id} saved as draft.`;
       await loadBikes();
+      window.dispatchEvent?.(new Event("bk-bikes-changed"));
     } catch (e) { bikeMsg.textContent = e.message; }
     finally { saveBikeBtn.disabled = false; }
   });
