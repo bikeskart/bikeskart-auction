@@ -61,6 +61,7 @@ router.get("/:id", async (req, res, next) => {
   try {
     const bike = await getBikeById(req.params.id);
     if (!bike) return res.status(404).json({ error: "Bike not found" });
+    if(req.adminPermissions.includes('owner')){try{const [[source]]=await require('../config/db').query('SELECT p.id,p.inspection_at,p.location,u.full_name AS executive_name FROM bike_purchases p LEFT JOIN users u ON u.id=p.assigned_to WHERE p.bike_id=?',[bike.id]);if(source)bike.purchase_source=source;}catch(e){if(e.code!=='ER_NO_SUCH_TABLE')throw e;}}
     res.json({ bike:require("../utils/adminOperations").privateBike(bike,req.adminPermissions.includes("owner")) });
   } catch (err) { next(err); }
 });
