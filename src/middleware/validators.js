@@ -18,7 +18,8 @@ const registerValidators = [
   body("fullName").trim().isLength({ min: 2, max: 150 }).withMessage("fullName is required"),
   body("email").trim().isEmail().normalizeEmail().withMessage("valid email is required"),
   body("phone")
-    .optional({ nullable: true })
+    .if(body("role").equals("dealer"))
+    .notEmpty().withMessage("Mobile number is required for dealers").bail()
     .trim()
     .isMobilePhone("any")
     .withMessage("phone must be a valid phone number"),

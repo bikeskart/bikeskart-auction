@@ -1,5 +1,6 @@
 const express = require('express');
 const pool = require('../config/db');
+const {ensureDealerProfile}=require('../utils/dealerProfile');
 const {requireAuth} = require('../middleware/auth');
 const {findById} = require('../models/userModel');
 const {eligible,positiveId,fail} = require('../utils/auctionRules');
@@ -7,8 +8,9 @@ const router = express.Router();
 router.use(requireAuth,(req,res,next) => findById(req.user.sub).then(u => {eligible(u,['admin']);next();}).catch(next));
 router.get('/',async (req,res,next) => {
   try {
+    await ensureDealerProfile(pool);
     const page = Math.min(Math.max(parseInt(req.query.page,10)||1,1),10000);
-    const [rows] = await pool.query("SELECT id,role,full_name,email,is_verified,is_active FROM users WHERE role IN ('dealer','bidder') ORDER BY is_verified,id DESC LIMIT 50 OFFSET ?",[(page-1)*50]);
+    const [rows] = await pool.query("SELECT id,role,full_name,email,phone,business_name,is_verified,is_active FROM users WHERE role IN ('dealer','bidder') ORDER BY is_verified,id DESC LIMIT 50 OFFSET ?",[(page-1)*50]);
     const [[{total}]] = await pool.query("SELECT COUNT(*) AS total FROM users WHERE role IN ('dealer','bidder')");
     res.json({rows,total,page});
   } catch(e) {next(e);}
