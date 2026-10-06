@@ -47,3 +47,5 @@ body.dealer-mode .dealer-search summary{font-size:12px;margin-top:6px}
 body.dealer-mode main{flex:1;min-height:0;overflow:hidden}
 body.dealer-mode #live{height:100%;width:100%;min-height:0;padding:16px;overflow-y:auto;overscroll-behavior-y:contain;scroll-margin-top:0}
 body.dealer-mode footer{display:none}
+
+.dealer-menu-links{display:flex;flex-direction:column;margin-bottom:16px;border-bottom:1px solid #d7d9d0;padding-bottom:10px}.dealer-menu-links a{padding:9px 0;font-size:13px;font-weight:600}.dealer-menu-links a:hover{color:#637b00}.account-dropdown{max-height:calc(100dvh - 90px);overflow-y:auto}.account-menu summary::after{content:''}.dealer-mode .guest-menu-link{display:none}
