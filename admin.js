@@ -42,7 +42,7 @@
   function showDashboard(user) {
     window.bkAdminPermissions=[];
     hideDetailsPanel();
-    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
+    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
     document.querySelector?.(".admin-shell")?.classList.add("is-dashboard");
     loginPanel.classList.remove("active");
     dashboardPanel.classList.add("active");
@@ -56,7 +56,7 @@
     window.bkAdminPermissions=[];
     hideDetailsPanel();
     bikeList.innerHTML="";
-    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
+    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
     dashboardPanel.classList.remove("active");
     loginPanel.classList.add("active");
     loginMsg.textContent = message;
@@ -114,7 +114,7 @@
       if (!res.ok) throw new Error(data.error || "Could not load bike");
       const b = data.bike;
       const profile=typeof b.detail_profile==='string'?JSON.parse(b.detail_profile):b.detail_profile||{};
-      for(const key of ["registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])setValue("edit"+key[0].toUpperCase()+key.slice(1),profile[key]);
+      for(const key of ["engineNumber", "chassisNumber", "registrationDate", "inspectionNotes", "registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])setValue("edit"+key[0].toUpperCase()+key.slice(1),profile[key]);
       setValue("editBikeId", b.id); setValue("editBrand", b.brand); setValue("editModel", b.model);
       setValue("editYear", b.year); setValue("editRegistrationNumber", b.registration_number);
       setValue("editKilometersDriven", b.kilometers_driven); setValue("editOwnershipCount", b.ownership_count);
@@ -124,7 +124,8 @@
       setValue("editFuelType", b.fuel_type); setValue("editStatus", b.status); setValue("editConditionNotes", b.condition_notes);
       window.dispatchEvent?.(new CustomEvent("bk-admin-bike",{detail:b}));
       document.getElementById("detailsTitle").textContent = `${b.brand} ${b.model}`;
-      document.getElementById("detailsSub").textContent = `Bike #${b.id} • ${b.status || "draft"}`;
+      document.getElementById("detailsSub").textContent = `Bike #${b.id} • ${b.status || "draft"}${b.purchase_source?" · Inspected by "+b.purchase_source.executive_name+" · "+b.purchase_source.inspection_at+" UTC":""}`;
+      let sourceButton=document.getElementById("viewPurchaseSource");if(sourceButton?.remove)sourceButton.remove();if(b.purchase_source){sourceButton=document.createElement("button");sourceButton.id="viewPurchaseSource";sourceButton.type="button";sourceButton.textContent="View original purchase / inspection record";sourceButton.addEventListener("click",()=>window.bkOpenPurchase?.(b.purchase_source.id));document.getElementById("detailsSub").after(sourceButton);}
       const photos = document.getElementById("existingPhotos");
       photos.innerHTML = b.images?.length ? b.images.map(img => `<img src="${esc(img.image_url)}" alt="Bike photo">`).join("") : `<div class="details-note">No bike photos uploaded.</div>`;
       const rc = document.getElementById("rcCurrent");
@@ -194,7 +195,7 @@
       const fd = new FormData();
       for(const key of saleKeys){const field=document.getElementById("sale"+key[0].toUpperCase()+key.slice(1));if(!field.disabled)fd.set(key,field.value);}
       for (const [field, id2] of [["brand","editBrand"],["model","editModel"],["year","editYear"],["registrationNumber","editRegistrationNumber"],["kilometersDriven","editKilometersDriven"],["ownershipCount","editOwnershipCount"],["fuelType","editFuelType"],["status","editStatus"],["conditionNotes","editConditionNotes"]]) fd.set(field, document.getElementById(id2).value.trim());
-      for(const key of ["registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])fd.set(key,document.getElementById("edit"+key[0].toUpperCase()+key.slice(1)).value);
+      for(const key of ["engineNumber", "chassisNumber", "registrationDate", "inspectionNotes", "registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])fd.set(key,document.getElementById("edit"+key[0].toUpperCase()+key.slice(1)).value);
       for (const file of document.getElementById("editBikePhotos").files) fd.append("bikePhotos", file);
       for(const kind of ["deliveryPhoto","saleReceipt"]){const file=document.getElementById(kind).files[0];if(file)fd.append(kind,file);}
       const rc = document.getElementById("editRcDocument").files[0]; if (rc) fd.append("rcDocument", rc);
