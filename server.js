@@ -38,6 +38,7 @@ app.use(express.urlencoded({ extended: true }));
  * DO NOT change these.
  */
 app.use("/api/auth", authRoutes);
+app.use("/api/admin-registration", require("./src/routes/adminRegistrationRoutes"));
 
 /*
  * Admin routes

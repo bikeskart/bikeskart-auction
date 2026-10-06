@@ -60,7 +60,7 @@ async function getBikeById(bikeId) {
   return { ...bike, detail_profile:readProfile(bike.detail_profile), sale_profile:readSale(bike.sale_profile), images };
 }
 
-async function listBikes({ status, search="", page = 1, pageSize = 20 } = {}) {
+async function listBikes({ status, search="", includeBuyer=true, page = 1, pageSize = 20 } = {}) {
   await ensureSale(pool);
   await ensureDealerProfile(pool);
   const join = `LEFT JOIN auctions a ON a.id=(SELECT MAX(ax.id) FROM auctions ax WHERE ax.bike_id=b.id AND ax.result='sold' AND ax.winner_id IS NOT NULL) LEFT JOIN users u ON u.id=a.winner_id`;
@@ -72,7 +72,7 @@ async function listBikes({ status, search="", page = 1, pageSize = 20 } = {}) {
   }
   if(search){
     const value='%'+search+'%';
-    const columns=['CAST(b.id AS CHAR)','b.brand','b.model','b.registration_number','u.full_name','u.email','u.phone','u.business_name',...['buyerName','buyerBusiness','buyerPhone','buyerEmail'].map(key=>`JSON_UNQUOTE(JSON_EXTRACT(b.sale_profile, '$.${key}'))`)];
+    const columns=['CAST(b.id AS CHAR)','b.brand','b.model','b.registration_number',...(includeBuyer?['u.full_name','u.email','u.phone','u.business_name',...['buyerName','buyerBusiness','buyerPhone','buyerEmail'].map(key=>`JSON_UNQUOTE(JSON_EXTRACT(b.sale_profile, '$.${key}'))`)]:[])];
     conditions.push('('+columns.map(c=>c+' LIKE ?').join(' OR ')+')');params.push(...columns.map(()=>value));
   }
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";

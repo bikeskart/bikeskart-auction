@@ -2,7 +2,7 @@
 
 ## Deployment
 
-Merge and allow Hostinger to deploy. Existing admin accounts retain owner access. The first authenticated admin request adds `users.admin_scopes`, `admin_activity` and `auction_confirmations` using additive schema changes. Existing inventory requires the nullable `bikes.sale_profile` column added by the inventory feature. The application database user needs CREATE and ALTER permissions. Auction migrations must already be applied.
+Merge and allow Hostinger to deploy. **admin@bikeskart.com** is the only main admin. Other admin accounts require explicit approved staff scopes. The first authenticated admin request adds `users.admin_scopes`, `admin_activity` and `auction_confirmations` using additive schema changes. Existing inventory requires the nullable `bikes.sale_profile` column added by the inventory feature. The application database user needs CREATE and ALTER permissions. Auction migrations must already be applied.
 
 The administrator page loads `admin-ops.js`; only the explicitly allowed frontend files are public. Restarting the deployed app starts the backup scheduler. Check **Backups** after deployment to verify that an archive was created on Hostinger. Automated tests use fixtures; the production database has not been tested.
 
@@ -19,7 +19,7 @@ The administrator page loads `admin-ops.js`; only the explicitly allowed fronten
 
 ## Staff access
 
-Owners create separate staff logins with inventory, accounts and/or auctions access. Staff remain `admin` for compatibility, but server middleware loads their current database scopes on every protected request. Disabling a staff account takes effect even with an unexpired access token. Inventory staff cannot alter buyer/payment fields. Accounts staff use Payments and Costs without editing bike specifications. Owners alone access activity history, staff management and backups. Existing owner accounts cannot be disabled or reduced through the staff UI, and users cannot change their own access.
+The main admin approves personal-email registration requests or creates staff logins with inventory, auctions and/or winner-notification access. Accounts and payment access cannot be granted to staff. Staff remain `admin` for compatibility, but server middleware loads their current database scopes on every protected request. Disabling a staff account takes effect even with an unexpired access token. Inventory staff cannot alter buyer/payment fields. Payments, costs, delivery, document operations, reports and dealer account controls stay with the main admin. Inventory responses omit private sale, payment and legal-document records for staff. Owners alone access activity history, staff management and backups. The main admin account cannot be disabled or reduced through the staff UI, and users cannot change their own access.
 
 ## Backup operation and recovery
 
@@ -42,3 +42,7 @@ RESTORE_DB_NAME=your_empty_restore_database node scripts/restoreAdminBackup.js /
 ```
 
 The restore script refuses a populated database or the configured live DB_NAME. It restores table definitions and rows into the empty database; failure can leave a partial restore, which must be discarded before retrying. Uploaded files remain in the extracted `uploads` directory. Compare row counts and files, test logins, payments and document downloads, then perform a planned application/database/upload switch. The restore script does not change production settings or overwrite live uploads. Store archives securely because they include account hashes, contact data and documents.
+
+## Personal-email admin registration
+
+On /admin.html, open **Register for admin access** and submit name, personal email, mobile and password. The request creates an inactive, unverified admin with no scopes. Permission fields in public registration are rejected. admin@bikeskart.com is reserved for the existing main admin account. The main admin opens **Staff Access**, selects inventory/auctions/notifications and **Approve & assign access**. Approval activates the account when Active is checked. Staff cannot approve peers, view accounting/payments/profit/reports, or assign permissions. Access is checked against current database state on every request, including direct API calls.
