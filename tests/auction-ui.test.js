@@ -5,12 +5,13 @@ const fs=require('node:fs');
 function screen(admin,fetcher){
   const elements=new Map(),listeners={};
   function element(id){if(!elements.has(id)){const handlers={};elements.set(id,{id,hidden:false,open:false,textContent:'',innerHTML:'',value:'',disabled:false,min:'',dataset:{},elements:{startsAt:{},endsAt:{}},classList:{contains:()=>true},addEventListener(type,fn){handlers[type]=fn;},handlers,reset(){this.resetCount=(this.resetCount||0)+1;},close(){this.open=false;this.handlers.close?.();},showModal(){this.open=true;}});}return elements.get(id);}
-  const document={hidden:false,getElementById(id){if(admin&&['dealerLogin'].includes(id)||!admin&&id==='auctionForm')return null;return element(id);},querySelectorAll(){return [];}};
+  const classes=new Set();
+  const document={body:{classList:{add:c=>classes.add(c),remove:c=>classes.delete(c),contains:c=>classes.has(c)}},hidden:false,getElementById(id){if(admin&&['dealerLogin'].includes(id)||!admin&&id==='auctionForm')return null;return element(id);},querySelectorAll(){return [];}};
   const window={addEventListener(type,fn){listeners[type]=fn;},bkAdminApi:fetcher};
   const formData=class {constructor(form){this.values=form.data||{};}*[Symbol.iterator](){yield*Object.entries(this.values);}};
   const context={document,window,fetch:fetcher,Headers,FormData:formData,Intl,Date,console,crypto:require('node:crypto').webcrypto,setInterval(){}};
   vm.runInNewContext(fs.readFileSync(require.resolve('../auction.js'),'utf8'),context);
-  return {elements,element,listeners};
+  return {elements,element,listeners,document};
 }
 const response=data=>({ok:true,status:200,json:async()=>data});
 test('admin scheduling retains form after asynchronous requests and sends timezone dates',async()=>{
@@ -40,4 +41,17 @@ test('a lost bid response retries the same request ID without a duplicate submis
 test('auction titles and winner details escape injected HTML',async()=>{
   const s=screen(true,async url=>response(url.includes('accounts')?{rows:[],total:0}:url.includes('bikes')?{rows:[]}: {rows:[{id:1,bike_id:2,brand:'<img onerror=evil()>',model:'Bike',phase:'ended',status:'closed',result:'sold',starting_price:50000,reserve_price:50000,winner_name:'<script>evil()</script>',starts_at:new Date().toISOString(),ends_at:new Date().toISOString()}],total:1,serverNow:new Date().toISOString()}));
   await s.listeners['bk-admin-ready']();const html=s.element('adminAuctions').innerHTML;assert.ok(html.includes('&lt;script&gt;'));assert.ok(!html.includes('<script>'));assert.ok(html.includes('&lt;img onerror=evil()&gt;'));
+});
+test('restoring a dealer session shows running auction cards immediately and logout restores homepage',async()=>{
+  const now=new Date().toISOString();
+  const s=screen(false,async url=>response(url==='/api/auth/refresh'?{accessToken:'token'}:url==='/api/auth/me'?{user:{id:3,role:'dealer',full_name:'Dealer'}}:{rows:[{id:1,bike_id:2,brand:'Honda',model:'Activa',phase:'live',status:'open',starting_price:50000,min_increment:500,starts_at:now,ends_at:now,cover_image:'/uploads/bikes/photo.jpg'}],total:1,serverNow:now}));
+  await new Promise(r=>setImmediate(r));
+  assert.ok(s.document.body.classList.contains('dealer-mode'));
+  assert.equal(s.element('dealerLogin').hidden,true);
+  assert.equal(s.element('dealerHeading').textContent,'Running auctions');
+  assert.match(s.element('dealerAuctions').innerHTML,/Honda Activa/);
+  assert.match(s.element('dealerAuctions').innerHTML,/photo.jpg/);
+  await s.element('dealerLogout').onclick();
+  assert.ok(!s.document.body.classList.contains('dealer-mode'));
+  assert.equal(s.element('dealerLogin').hidden,false);
 });

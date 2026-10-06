@@ -108,6 +108,11 @@ app.get("*", (req, res) => {
  * Global error handler
  */
 app.use((err, req, res, next) => {
+  if (err.name === "MulterError") {
+    const message = err.code === "LIMIT_FILE_SIZE" ? "Each upload must be 8 MB or smaller." : err.code === "LIMIT_UNEXPECTED_FILE" || err.code === "LIMIT_FILE_COUNT" ? "Upload up to 8 bike photos and 1 RC document at a time." : "Could not accept the upload. Please check the selected files.";
+    return res.status(400).json({error:message});
+  }
+  if (err.expose === true && err.status === 400) return res.status(400).json({error:err.message});
   console.error(err);
 
   if (res.headersSent) {

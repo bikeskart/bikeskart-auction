@@ -3,7 +3,8 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 
-const uploadRoot = path.resolve(__dirname, "../../uploads");
+const {uploadPaths} = require("../utils/uploadPaths");
+const {uploadRoot} = uploadPaths(path.resolve(__dirname, "../.."), process.env.UPLOAD_ROOT);
 const bikePhotosDir = path.join(uploadRoot, "bikes");
 const rcDocsDir = path.join(uploadRoot, "rc");
 fs.mkdirSync(bikePhotosDir, { recursive: true });
@@ -29,7 +30,8 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   if (file.fieldname === "bikePhotos" && imageTypes.has(file.mimetype)) return cb(null, true);
   if (file.fieldname === "rcDocument" && rcTypes.has(file.mimetype)) return cb(null, true);
-  cb(new Error("Unsupported file type"));
+  const error = new Error("Use JPG, PNG or WEBP for bike photos, and PDF, JPG, PNG or WEBP for RC documents.");
+  error.status = 400; error.expose = true; cb(error);
 };
 
 module.exports = multer({

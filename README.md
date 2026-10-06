@@ -95,3 +95,9 @@ Lists are paginated in batches of 50. Prices accept integer rupees up to ₹1 bi
 `npm test` covers security, API permissions, bid conflicts, replay protection,
 deadlines, reserves and closing using simulated database connections. Run the
 migration and a full auction on a staging database before production bidding.
+
+### Upload storage on Hostinger
+
+When the app runs beneath `hbuilds`, uploaded bike photos and private RC files use the shared `hbuilds/uploads` directory rather than a version's application folder. Local development still uses `uploads`. Set `UPLOAD_ROOT` to an absolute path to override this location. Public image URLs remain `/uploads/bikes/...`; RC documents remain accessible only through the authenticated admin route.
+
+After deploying this change, recover uploads retained in earlier Hostinger deployments by running `node scripts/recoverUploads.js` from the current application's `nodejs` directory. It copies files from retained versions and last-source, skips existing destination files, and does not change the database. Files already removed by the hosting provider need restoration from a backup or re-upload.
