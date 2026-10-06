@@ -51,6 +51,7 @@ app.use("/api/admin/bike-import", require("./src/routes/bulkBikeRoutes"));
 app.use("/api/admin/bikes", bikeRoutes);
 app.use("/api/auctions", auctionRoutes);
 app.use("/api/admin/accounts", accountRoutes);
+app.use("/api/admin/winners", require("./src/routes/winnerRoutes"));
 app.use((err, req, res, next) => {
   if (req.path.startsWith('/api/auctions') && err.code === 'ER_NO_SUCH_TABLE') {
     return res.status(503).json({error:'Auctions are being prepared. Please try again later.'});
