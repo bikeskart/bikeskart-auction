@@ -9,6 +9,9 @@ const db = require("./src/config/db");
 const authRoutes = require("./src/routes/authRoutes");
 const adminRoutes = require("./src/routes/adminRoutes");
 const bikeRoutes = require("./src/routes/bikeRoutes");
+const auctionRoutes = require("./src/routes/auctionRoutes");
+const accountRoutes = require("./src/routes/accountRoutes");
+const auctions = require("./src/models/auctionModel");
 
 const app = express();
 
@@ -45,6 +48,14 @@ app.use("/api/admin", adminRoutes);
  * Admin bike routes
  */
 app.use("/api/admin/bikes", bikeRoutes);
+app.use("/api/auctions", auctionRoutes);
+app.use("/api/admin/accounts", accountRoutes);
+app.use((err, req, res, next) => {
+  if (req.path.startsWith('/api/auctions') && err.code === 'ER_NO_SUCH_TABLE') {
+    return res.status(503).json({error:'Auctions are being prepared. Please try again later.'});
+  }
+  next(err);
+});
 
 /*
  * Uploaded bike photos and RC documents.
@@ -84,7 +95,7 @@ app.get("/health/db", async (req, res, next) => {
 /*
  * Serve the auction application itself.
  */
-for (const file of ["index.html", "admin.html", "style.css", "app.js", "admin.js"]) {
+for (const file of ["index.html", "admin.html", "style.css", "app.js", "admin.js", "auction.js", "auction.css"]) {
   app.get(`/${file}`, (req, res) => res.sendFile(path.join(__dirname, file)));
 }
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
@@ -118,6 +129,11 @@ if (require.main === module) app.listen(env.port, "0.0.0.0", () => {
   console.log(
     `BikesKart Auction running on port ${env.port} [${env.nodeEnv}]`
   );
+  const sweep = () => auctions.closeDue().catch(err => {
+    if (err.code !== 'ER_NO_SUCH_TABLE') console.error('Auction closing failed:', err.code || err.message);
+  });
+  sweep();
+  setInterval(sweep, 5000).unref();
 });
 
 module.exports = app;

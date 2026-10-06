@@ -7,6 +7,7 @@
 <link rel="icon" href="https://bikeskart.com/assets/images/bikeskart-logo.svg">
 <title>BikesKart Auction | Admin Login</title>
 <link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/auction.css">
 <style>
 .admin-wrap{min-height:calc(100vh - 90px);display:grid;place-items:center;padding:70px 20px}
 .admin-card{width:min(520px,100%);background:#11161c;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:34px;box-shadow:0 25px 70px rgba(0,0,0,.35)}
@@ -43,7 +44,7 @@
 </nav></header>
 
 <main class="admin-wrap">
-<section class="admin-card">
+<section class="admin-card admin-shell">
 <div class="admin-panel active" id="loginPanel">
 <div class="admin-brand"><img src="https://bikeskart.com/assets/images/bikeskart-logo-theme.png?v=1" alt="BikesKart"><span>AUCTION ADMIN</span></div>
 <h1>Admin Login</h1>
@@ -68,10 +69,10 @@
 </div>
 <div class="admin-actions"><button class="admin-secondary logout-top" id="logoutBtn">Logout</button></div>
 </div>
-<div class="admin-tabs"><button class="admin-tab active" type="button">Bikes</button><button class="admin-tab" type="button" disabled>Auctions — Next</button><button class="admin-tab" type="button" disabled>Bidders — Next</button></div>
+<div class="admin-tabs"><a class="admin-tab" href="#bikeForm">Bikes</a><a class="admin-tab" href="#auctionAdmin">Auctions</a><a class="admin-tab" href="#accountsAdmin">Dealer Accounts</a></div>
 <div class="admin-card-wide">
 <h2 class="admin-section-title">Add Bike</h2>
-<p class="admin-section-lead">Create a draft bike listing. You can add it to an auction in the next stage.</p>
+<p class="admin-section-lead">Create a draft bike listing. Use the bike ID below to schedule its auction.</p>
 <form id="bikeForm" enctype="multipart/form-data">
 <div class="bike-form-grid">
 <div class="bike-field"><label for="brand">Brand *</label><input id="brand" name="brand" required placeholder="Royal Enfield"></div>
@@ -108,6 +109,24 @@
 <div class="bike-form-actions"><button class="main-btn" type="submit" id="updateBikeBtn">SAVE CHANGES →</button><span class="detail-msg" id="detailMsg"></span></div>
 </form>
 </div>
+
+<section id="auctionAdmin" class="auction-admin-block">
+<h2>Schedule an auction</h2><p>Times use your device timezone. Prices are in whole rupees. Auctions end automatically.</p>
+<form id="auctionForm" class="auction-form">
+<label>Bike ID<input name="bikeId" type="number" min="1" step="1" list="bikeOptions" required><datalist id="bikeOptions"></datalist></label>
+<label>Starting price (₹)<input name="startingPrice" type="number" min="1" max="1000000000" step="1" required></label>
+<label>Minimum bid increase (₹)<input name="minIncrement" type="number" min="1" max="1000000000" step="1" value="500" required></label>
+<label>Reserve price (₹, optional)<input name="reservePrice" type="number" min="1" max="1000000000" step="1" placeholder="Defaults to starting price"></label>
+<label>Starts at<input name="startsAt" type="datetime-local" required></label>
+<label>Ends at<input name="endsAt" type="datetime-local" required></label>
+<button type="submit" class="main-btn">CREATE AUCTION →</button>
+</form><p id="auctionAdminMsg" role="status" aria-live="polite"></p>
+<div id="adminAuctions" class="lot-grid"></div>
+<div class="auction-pagination"><button type="button" id="adminPrev">Previous</button><span id="adminPage"></span><button type="button" id="adminNext">Next</button></div>
+</section>
+<section id="accountsAdmin" class="auction-admin-block"><h2>Dealer accounts</h2><p>Approve verified dealers before they can log in and bid. Disabled accounts cannot place new bids. Existing bids remain binding.</p><div id="accountList"></div><p id="accountMsg" role="status"></p>
+<div class="auction-pagination"><button type="button" id="accountPrev">Previous</button><span id="accountPage"></span><button type="button" id="accountNext">Next</button></div>
+</section>
 <div class="bike-list"><h2 class="admin-section-title">Recent Bikes</h2><div id="bikeList" class="empty-state">Loading…</div></div>
 </div>
 </div>
@@ -116,5 +135,6 @@
 </main>
 
 <script src="/admin.js"></script>
+<script src="/auction.js"></script>
 </body>
 </html>
