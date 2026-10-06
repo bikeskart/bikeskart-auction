@@ -81,3 +81,17 @@ test('unsupported and oversized uploads show useful errors without database writ
     assert.equal(queries.length,0);
   }
 });
+test('production shows auction rule errors while hiding unexpected server errors',async()=>{
+  const env=require('../src/config/env'),users=require('../src/models/userModel'),auctions=require('../src/models/auctionModel'),rules=require('../src/utils/auctionRules');
+  const originals={nodeEnv:env.nodeEnv,findById:users.findById,create:auctions.create};
+  try {
+    env.nodeEnv='production';
+    users.findById=async()=>({id:1,role:'admin',is_active:1,is_verified:1});
+    auctions.create=async()=>rules.fail('This bike already has a winning auction',409);
+    let res=await fetch(base+'/api/auctions',{method:'POST',headers:{...bearer('admin'),'Content-Type':'application/json'},body:'{}'});
+    assert.equal(res.status,409);assert.equal((await res.json()).error,'This bike already has a winning auction');
+    auctions.create=async()=>{throw new Error('private database error');};
+    res=await fetch(base+'/api/auctions',{method:'POST',headers:{...bearer('admin'),'Content-Type':'application/json'},body:'{}'});
+    assert.equal(res.status,500);assert.equal((await res.json()).error,'Something went wrong');
+  } finally {env.nodeEnv=originals.nodeEnv;users.findById=originals.findById;auctions.create=originals.create;}
+});

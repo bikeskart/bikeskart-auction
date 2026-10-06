@@ -112,7 +112,7 @@ app.use((err, req, res, next) => {
     const message = err.code === "LIMIT_FILE_SIZE" ? "Each upload must be 8 MB or smaller." : err.code === "LIMIT_UNEXPECTED_FILE" || err.code === "LIMIT_FILE_COUNT" ? "Upload up to 8 bike photos and 1 RC document at a time." : "Could not accept the upload. Please check the selected files.";
     return res.status(400).json({error:message});
   }
-  if (err.expose === true && err.status === 400) return res.status(400).json({error:err.message});
+  if (err.expose === true && Number.isInteger(err.status) && err.status >= 400 && err.status < 500) return res.status(err.status).json({error:err.message});
   console.error(err);
 
   if (res.headersSent) {
