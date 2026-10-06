@@ -18,3 +18,9 @@ The application creates the two purchase tables when first used and adds `execut
 Camera capture requires HTTPS and browser permission. Camera integration has been verified with a mocked browser stream; actual Android/iPhone camera behavior still needs a device check after deployment. Capture timestamps and the camera-source label are recorded, but browser-origin metadata is not cryptographic proof of a photo's authenticity.
 
 No notifications are sent automatically by this workflow.
+
+## Inspection estimates
+
+Executives record notice/fine details and amount, painting work/cost, other damage repairs/cost, and individually named additional replacement parts with each cost. Oil change, seat change and brake pad change amounts must be entered before submission; 0 is accepted when there is no charge. Transport is fixed at ₹1,000. Required work descriptions accompany nonzero fine, painting and damage amounts. The server recalculates the total in paise and rejects invalid or negative costs. Drafts may be saved with missing amounts, but cannot be submitted until completed.
+
+The main admin sees the complete itemized estimate in the purchase/inspection record, also linked from inventory. Estimates remain private source records and are not published in dealer bike details. These estimates do not record payment or automatically overwrite actual purchase expenses; the main admin records approved actual expenses in purchase accounting separately.
