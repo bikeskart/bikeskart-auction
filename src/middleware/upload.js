@@ -20,7 +20,7 @@ function safeName(original) {
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
-    cb(null, file.fieldname === "rcDocument" ? rcDocsDir : bikePhotosDir);
+    cb(null, ["rcDocument","deliveryPhoto","saleReceipt"].includes(file.fieldname) ? rcDocsDir : bikePhotosDir);
   },
   filename(req, file, cb) {
     cb(null, safeName(file.mimetype));
@@ -29,15 +29,16 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
   if (file.fieldname === "bikePhotos" && imageTypes.has(file.mimetype)) return cb(null, true);
-  if (file.fieldname === "rcDocument" && rcTypes.has(file.mimetype)) return cb(null, true);
-  const error = new Error("Use JPG, PNG or WEBP for bike photos, and PDF, JPG, PNG or WEBP for RC documents.");
+  if (file.fieldname === "deliveryPhoto" && imageTypes.has(file.mimetype)) return cb(null, true);
+  if (["rcDocument","saleReceipt"].includes(file.fieldname) && rcTypes.has(file.mimetype)) return cb(null, true);
+  const error = new Error("Use JPG, PNG or WEBP for bike photos, and PDF, JPG, PNG or WEBP for RC documents and sale receipts. Delivery photos must be JPG, PNG or WEBP.");
   error.status = 400; error.expose = true; cb(error);
 };
 
 module.exports = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 8 * 1024 * 1024, files: 9 },
+  limits: { fileSize: 8 * 1024 * 1024, files: 11 },
 });
 
 module.exports.uploadRoot = uploadRoot;
