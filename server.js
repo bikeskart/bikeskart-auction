@@ -44,6 +44,7 @@ app.use("/api/admin-registration", require("./src/routes/adminRegistrationRoutes
  * Admin routes
  */
 app.use("/api/admin", adminRoutes);
+app.use("/api/movements", require("./src/routes/movementRoutes"));
 app.use("/api/purchases", require("./src/routes/purchaseRoutes"));
 app.use("/api/admin/operations", require("./src/routes/operationRoutes"));
 app.use("/api/admin/backups", require("./src/routes/backupRoutes"));
@@ -101,7 +102,7 @@ app.get("/health/db", async (req, res, next) => {
 /*
  * Serve the auction application itself.
  */
-for (const file of ["index.html", "admin.html", "style.css", "app.js", "admin.js", "admin-ops.js", "purchase-admin.js", "executive.html", "executive.js", "auction.js", "auction.css"]) {
+for (const file of ["index.html", "admin.html", "style.css", "app.js", "admin.js", "admin-ops.js", "purchase-admin.js", "movements.js", "executive.html", "executive.js", "auction.js", "auction.css"]) {
   app.get(`/${file}`, (req, res) => res.sendFile(path.join(__dirname, file)));
 }
 app.get("/executive", (req,res)=>res.sendFile(path.join(__dirname,"executive.html")));
