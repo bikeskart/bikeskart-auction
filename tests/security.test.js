@@ -69,3 +69,15 @@ test('upload extensions follow accepted MIME type',async () => {
   const url=insert.params[0][0][1]; assert.match(url,/\.jpg$/);
   fs.unlinkSync(path.join(require('../src/middleware/upload').uploadRoot,'bikes',path.basename(url)));
 });
+test('unsupported and oversized uploads show useful errors without database writes',async()=>{
+  for (const [type,bytes,message] of [['image/heic','not-supported',/JPG, PNG or WEBP/],['image/jpeg',new Uint8Array(8*1024*1024+1),/8 MB/]]) {
+    queries.length=0;
+    const form=new FormData();
+    Object.entries({brand:'Honda',model:'Activa',year:'2024'}).forEach(([key,value])=>form.set(key,value));
+    form.append('bikePhotos',new Blob([bytes],{type}),'photo.jpg');
+    const response=await fetch(base+'/api/admin/bikes',{method:'POST',headers:bearer('admin'),body:form});
+    assert.equal(response.status,400);
+    assert.match((await response.json()).error,message);
+    assert.equal(queries.length,0);
+  }
+});
