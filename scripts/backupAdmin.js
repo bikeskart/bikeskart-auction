@@ -1,0 +1,1 @@
+require('dotenv').config();const pool=require('../src/config/db');require('../src/utils/adminBackups').backup(pool).then(r=>console.log(JSON.stringify(r))).catch(e=>{console.error(e.message);process.exitCode=1;}).finally(()=>pool.end());

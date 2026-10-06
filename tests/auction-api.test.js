@@ -2,7 +2,7 @@ const {test,before,after}=require('node:test');
 const assert=require('node:assert/strict');
 Object.assign(process.env,{DB_HOST:'unused',DB_USER:'unused',DB_PASSWORD:'unused',DB_NAME:'unused',JWT_SECRET:'test-only-secret',NODE_ENV:'test'});
 const mock=(file,exports)=>{const path=require.resolve(file);require.cache[path]={id:path,filename:path,loaded:true,exports};};
-mock('../src/config/db',{});
+mock('../src/config/db',{query:async sql=>sql.startsWith('SELECT id,role,is_active')?[[{...account,admin_scopes:null}]]:sql.startsWith('SHOW COLUMNS')?[[{Field:'admin_scopes'}]]:[[]]});
 let account={id:3,role:'dealer',is_active:1,is_verified:1},writes=0,view;
 mock('../src/models/userModel',{findById:async()=>account});
 mock('../src/models/auctionModel',{list:async(user)=>{view=user;return {rows:[]};},detail:async()=>({auction:{id:1}}),create:async()=>{writes++;return {id:1};},bid:async()=>{writes++;return {amount:50000};},cancel:async()=>{writes++;return {cancelled:true};}});
