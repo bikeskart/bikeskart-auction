@@ -37,7 +37,7 @@ body.dealer-mode .bk-header{position:relative;flex-shrink:0}
 body.dealer-mode .bk-header>.dealer-toolbar{display:flex;flex-direction:column;max-width:760px;width:100%;margin:0 auto;padding:0 16px 10px;gap:8px}
 body.dealer-mode .bk-nav-links{display:none}
 body.dealer-mode .bk-nav{width:100%}
-body.dealer-mode .auction-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:0;order:-1;overflow:visible}
+body.dealer-mode .auction-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0;order:-1;overflow:visible}
 body.dealer-mode .auction-filters button{font-size:12px;padding:10px 4px;white-space:normal}
 body.dealer-mode .dealer-search{margin:0;padding:8px 10px;border-radius:8px}
 body.dealer-mode .dealer-search>label{display:none}
