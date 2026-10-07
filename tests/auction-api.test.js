@@ -17,4 +17,4 @@ test('dealer cannot create or cancel auctions',async()=>{writes=0;assert.equal((
 test('disabled and unverified accounts lose viewing access immediately',async()=>{for(const field of ['is_active','is_verified']){account[field]=0;assert.equal((await fetch(base,{headers:headers()})).status,403);account[field]=1;}});
 test('viewer identity comes from current account data',async()=>{assert.equal((await fetch(base,{headers:headers()})).status,200);assert.equal(view.id,3);assert.equal(view.role,'dealer');});
 test('invalid auction IDs are rejected',async()=>{for(const id of ['0','-1','1.2','abc'])assert.equal((await fetch(base+'/'+id,{headers:headers()})).status,400);});
-test('live admin role permits creation even with an older role in JWT',async()=>{account.role='admin';assert.equal((await fetch(base,{method:'POST',headers:headers(),body:'{}'})).status,201);account.role='dealer';});
+test('live admin role permits creation even with an older role in JWT',async()=>{account.role='admin';assert.equal((await fetch(base,{method:'POST',headers:headers(),body:'{"bikeId":1}'})).status,201);account.role='dealer';});

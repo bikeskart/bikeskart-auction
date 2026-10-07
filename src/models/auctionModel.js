@@ -40,12 +40,13 @@ function createAuctionModel(pool) {
     await c.query("UPDATE auctions SET status = 'closed', result = ?, winner_id = ?, closed_at = UTC_TIMESTAMP(3) WHERE id = ?",[a.result,a.winner_id,a.id]);
     return a;
   }
-  async function create(body, adminId) {
+  async function create(body, adminId, checkReadiness) {
     return transaction(async c => {
       await user(c,adminId,['admin']);
       const input = rules.creation(body,await clock(c));
       const [[bike]] = await c.query('SELECT id, status FROM bikes WHERE id = ? FOR UPDATE',[input.bikeId]);
       if (!bike) rules.fail('Bike not found',404);
+      if (checkReadiness) await checkReadiness(c,input.bikeId);
       if (bike.status === 'sold') rules.fail('A sold bike cannot be auctioned',409);
       const [[active]] = await c.query("SELECT id FROM auctions WHERE bike_id = ? AND status = 'open'",[input.bikeId]);
       if (active) rules.fail('This bike already has an active auction',409);

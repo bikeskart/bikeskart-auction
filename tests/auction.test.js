@@ -88,3 +88,4 @@ test('dealer auction responses hide reserve and other bidder identities',async()
   assert.equal(dealer.is_winner,true);assert.equal(dealer.is_leading,true);
   const admin=(await model.list({id:9,role:'admin'})).rows[0];assert.equal(admin.reserve_price,50000);assert.equal(admin.winner_email,'private@example.com');
 });
+test('auction readiness is checked inside the creation transaction and failures roll back',async()=>{const body={bikeId:2,startingPrice:50000,minIncrement:500,startsAt:new Date(NOW).toISOString(),endsAt:new Date(NOW+60000).toISOString()},f=fixture({status:'closed',result:'unsold'});let checked=false;await assert.rejects(()=>f.model.create(body,9,async(conn,id)=>{checked=!!conn.query&&id===2;throw Error('Main admin handover required');}),/handover required/);assert.equal(checked,true);assert.equal(f.state.commits,0);});

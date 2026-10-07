@@ -93,10 +93,10 @@ test('production shows auction rule errors while hiding unexpected server errors
     env.nodeEnv='production';
     users.findById=async()=>({id:1,role:'admin',is_active:1,is_verified:1});
     auctions.create=async()=>rules.fail('This bike already has a winning auction',409);
-    let res=await fetch(base+'/api/auctions',{method:'POST',headers:{...bearer('admin'),'Content-Type':'application/json'},body:'{}'});
+    let res=await fetch(base+'/api/auctions',{method:'POST',headers:{...bearer('admin'),'Content-Type':'application/json'},body:'{"bikeId":1}'});
     assert.equal(res.status,409);assert.equal((await res.json()).error,'This bike already has a winning auction');
     auctions.create=async()=>{throw new Error('private database error');};
-    res=await fetch(base+'/api/auctions',{method:'POST',headers:{...bearer('admin'),'Content-Type':'application/json'},body:'{}'});
+    res=await fetch(base+'/api/auctions',{method:'POST',headers:{...bearer('admin'),'Content-Type':'application/json'},body:'{"bikeId":1}'});
     assert.equal(res.status,500);assert.equal((await res.json()).error,'Something went wrong');
   } finally {env.nodeEnv=originals.nodeEnv;users.findById=originals.findById;auctions.create=originals.create;}
 });
