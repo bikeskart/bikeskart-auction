@@ -110,7 +110,7 @@ function createAuctionModel(pool) {
     a.minimum_bid = rules.minimum(a);
     a.is_leading = Boolean(viewer && String(a.highest_bidder_id) === String(viewer.id));
     a.is_winner = Boolean(viewer && String(a.winner_id) === String(viewer.id));
-    if (viewer?.role !== 'admin') for (const key of ['reserve_price','highest_bidder_id','winner_id','created_by','active_bike_id','winner_name','winner_email']) delete a[key];
+    if (viewer?.role !== 'admin') for (const key of ['reserve_price','highest_bidder_id','winner_id','created_by','active_bike_id','winner_name','winner_email','leading_name','leading_business']) delete a[key];
     return a;
   }
   async function list(viewer, page=1, filters={}) {
@@ -122,8 +122,8 @@ function createAuctionModel(pool) {
       b.brand,b.model,b.registration_number,b.year,b.kilometers_driven,b.condition_notes,b.ownership_count,b.fuel_type,
       (SELECT image_url FROM bike_images WHERE bike_id = b.id ORDER BY sort_order,id LIMIT 1) AS cover_image,
       (SELECT MAX(amount) FROM auction_bids mine WHERE mine.auction_id=a.id AND mine.bidder_id=?) AS my_bid,
-      u.full_name AS winner_name,u.email AS winner_email
-      FROM auctions a JOIN bikes b ON b.id = a.bike_id LEFT JOIN users u ON u.id = a.winner_id
+      u.full_name AS winner_name,u.email AS winner_email,leader.full_name AS leading_name
+      FROM auctions a JOIN bikes b ON b.id = a.bike_id LEFT JOIN users u ON u.id = a.winner_id LEFT JOIN users leader ON leader.id=a.highest_bidder_id
       ${filter.where} ORDER BY (a.status = 'open') DESC,a.created_at DESC,a.id DESC LIMIT 50 OFFSET ?`,[viewer.id,...filter.params,(page-1)*50]);
     const bikeIds=[...new Set(rows.map(row=>row.bike_id))];
     const images=bikeIds.length?(await pool.query(`SELECT bike_id,image_url FROM bike_images WHERE bike_id IN (${bikeIds.map(()=>'?').join(',')}) ORDER BY sort_order,id`,bikeIds))[0]:[];

@@ -81,10 +81,10 @@ test('duplicate active auctions and a bike with a winner cannot be rescheduled',
   assert.equal((await fixture({status:'closed',result:'unsold'}).model.create(body,9)).id,2);
 });
 test('dealer auction responses hide reserve and other bidder identities',async()=>{
-  const row={...fixture({status:'closed',result:'sold',highest_bid:55000,highest_bidder_id:3,winner_id:3}).state.auction,created_by:9,winner_name:'Private Name',winner_email:'private@example.com',active_bike_id:null};
+  const row={...fixture({status:'closed',result:'sold',highest_bid:55000,highest_bidder_id:3,winner_id:3}).state.auction,created_by:9,winner_name:'Private Name',winner_email:'private@example.com',leading_name:'Private Leader',leading_business:'Private Shop',active_bike_id:null};
   const pool={async query(sql){if(sql.startsWith('SELECT id FROM auctions'))return [[]];if(sql.includes(' AS server_now'))return [[{server_now:new Date(NOW).toISOString()}]];if(sql.includes('COUNT(*)'))return [[{total:1}]];return [[structuredClone(row)]];}};
   const model=createAuctionModel(pool),dealer=(await model.list({id:3,role:'dealer'})).rows[0];
-  for(const key of ['reserve_price','highest_bidder_id','winner_id','created_by','winner_name','winner_email','active_bike_id'])assert.ok(!(key in dealer),key);
+  for(const key of ['reserve_price','highest_bidder_id','winner_id','created_by','winner_name','winner_email','leading_name','leading_business','active_bike_id'])assert.ok(!(key in dealer),key);
   assert.equal(dealer.is_winner,true);assert.equal(dealer.is_leading,true);
   const admin=(await model.list({id:9,role:'admin'})).rows[0];assert.equal(admin.reserve_price,50000);assert.equal(admin.winner_email,'private@example.com');
 });
