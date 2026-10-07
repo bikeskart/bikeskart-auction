@@ -30,13 +30,15 @@
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", () => selectTab(tab));
     tab.addEventListener("keydown", event => {
+      const visible = tabs.filter(item => !item.hidden && !item.classList.contains("outside-page"));
+      const current = visible.indexOf(tab);
       let next;
-      if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
-      if (event.key === "ArrowLeft") next = (index + tabs.length - 1) % tabs.length;
+      if (event.key === "ArrowRight") next = (current + 1) % visible.length;
+      if (event.key === "ArrowLeft") next = (current + visible.length - 1) % visible.length;
       if (event.key === "Home") next = 0;
-      if (event.key === "End") next = tabs.length - 1;
+      if (event.key === "End") next = visible.length - 1;
       if (next == null) return;
-      event.preventDefault(); selectTab(tabs[next]); tabs[next].focus();
+      event.preventDefault(); selectTab(visible[next]); visible[next].focus();
     });
   });
   function showDashboard(user) {
@@ -51,6 +53,7 @@
     window.dispatchEvent?.(new Event("bk-admin-ready"));
   }
   function showLogin(message = "") {
+    window.dispatchEvent?.(new Event("bk-admin-signed-out"));
     document.querySelector?.(".admin-shell")?.classList.remove("is-dashboard");
     accessToken = null;
     window.bkAdminPermissions=[];
