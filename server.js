@@ -105,7 +105,7 @@ app.get("/health/db", async (req, res, next) => {
 /*
  * Serve the auction application itself.
  */
-for (const file of ["index.html", "admin.html", "style.css", "app.js", "admin.js", "admin-ops.js", "admin-navigation.js", "specialist-admin.js", "workflow-admin.js", "completed-auctions.js", "admin-navigation.css", "purchase-admin.js", "movements.js", "executive.html", "executive.js", "auction.js", "auction.css"]) {
+for (const file of ["index.html", "admin.html", "style.css", "app.js", "admin.js", "vehicle-frame.js", "vehicle-frame.css", "admin-ops.js", "admin-navigation.js", "specialist-admin.js", "workflow-admin.js", "completed-auctions.js", "admin-navigation.css", "purchase-admin.js", "movements.js", "executive.html", "executive.js", "auction.js", "auction.css"]) {
   app.get(`/${file}`, (req, res) => res.sendFile(path.join(__dirname, file)));
 }
 app.get(["/admin", ...["dashboard","vehicles","purchases","auctions","warehouse","accounts","people","reports"].map(page=>"/admin/"+page)],(req,res)=>res.sendFile(path.join(__dirname,"admin.html")));
