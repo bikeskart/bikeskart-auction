@@ -1,0 +1,5 @@
+const ops=require('./adminOperations'),p=require('./purchases');
+const roles={purchase:{label:'Purchase Admin',scopes:['purchase']},auction:{label:'Auction Admin',scopes:['auctions','notifications']},documents:{label:'Documents Admin',scopes:['documents']},mechanic:{label:'Mechanic Admin',scopes:['mechanic']}};
+function allow(scopes,role){if(!roles[role]||!scopes.includes('owner')&&!roles[role].scopes.every(s=>scopes.includes(s)))ops.error('Your admin role cannot access this workspace',403);}
+function sanitize(row,role){const v=p.json(row.vehicle),vehicle={registrationNumber:v.registrationNumber,brand:v.brand,model:v.model,year:v.year,inspectionZone:v.inspectionZone,conditionNotes:v.conditionNotes,detailProfile:v.detailProfile,...(role==='mechanic'?{inspectionCharges:v.inspectionCharges,mechanicReview:v.mechanicReview}:{}),...(role==='purchase'?{purchaseProposal:v.purchaseProposal}:{})};return {id:row.id,bike_id:row.bike_id,status:row.status,assigned_to:row.assigned_to,inspection_at:row.inspection_at,location:row.location,version:row.version,vehicle,customer:role==='mechanic'?{}:p.json(row.customer)};}
+module.exports={roles,allow,sanitize};

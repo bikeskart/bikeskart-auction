@@ -44,7 +44,7 @@
   function showDashboard(user) {
     window.bkAdminPermissions=[];
     hideDetailsPanel();
-    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives","movement"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
+    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives","movement","purchasework","documentswork","mechanicwork"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
     document.querySelector?.(".admin-shell")?.classList.add("is-dashboard");
     loginPanel.classList.remove("active");
     dashboardPanel.classList.add("active");
@@ -59,7 +59,7 @@
     window.bkAdminPermissions=[];
     hideDetailsPanel();
     bikeList.innerHTML="";
-    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives","movement"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
+    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives","movement","purchasework","documentswork","mechanicwork"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
     dashboardPanel.classList.remove("active");
     loginPanel.classList.add("active");
     loginMsg.textContent = message;
