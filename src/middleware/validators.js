@@ -37,7 +37,7 @@ const registerValidators = [
 ];
 
 const loginValidators = [
-  body("email").trim().isEmail().normalizeEmail().withMessage("valid email is required"),
+  body("email").trim().isEmail().customSanitizer((email,{req})=>{req.loginEmailExact=email.toLowerCase();return email;}).normalizeEmail().withMessage("valid email is required"),
   body("password").notEmpty().withMessage("password is required"),
   handleValidationErrors,
 ];
