@@ -125,7 +125,7 @@
 <div class="bike-field"><label for="batteryWorking">Battery Working</label><select id="batteryWorking" name="batteryWorking"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
 <div class="bike-field"><label for="chassis">Chassis</label><select id="chassis" name="chassis"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
 <div class="bike-field"><label for="bodyLine">Body Line</label><select id="bodyLine" name="bodyLine"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
-<div class="bike-field"><label for="vehicleRating">Vehicle Rating (1–5)</label><input id="vehicleRating" name="vehicleRating" type="number" min="1" max="5" step="1" placeholder="Not recorded"></div>
+
 <div class="bike-field full"><label for="conditionNotes">Description / Condition Notes</label><textarea id="conditionNotes" name="conditionNotes" placeholder="Describe overall condition, service history, tyres, accessories, etc."></textarea></div>
 </div>
 <div class="bike-form-actions"><button class="main-btn" type="submit" id="saveBikeBtn">SAVE BIKE →</button><span class="bike-msg" id="bikeMsg"></span></div>
@@ -158,7 +158,7 @@
 <div class="details-field"><label for="editBatteryWorking">Battery Working</label><select id="editBatteryWorking" name="batteryWorking"><option value="">Not recorded</option><option>Yes</option><option>No</option></select></div>
 <div class="details-field"><label for="editChassis">Chassis</label><select id="editChassis" name="chassis"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
 <div class="details-field"><label for="editBodyLine">Body Line</label><select id="editBodyLine" name="bodyLine"><option value="">Not recorded</option><option>Good</option><option>Average</option><option>Poor</option></select></div>
-<div class="details-field"><label for="editVehicleRating">Vehicle Rating (1–5)</label><input id="editVehicleRating" name="vehicleRating" type="number" min="1" max="5" step="1" placeholder="Not recorded"></div>
+
 <div class="details-field full"><label for="editConditionNotes">Description / Condition Notes</label><textarea id="editConditionNotes"></textarea></div>
 <div class="details-field full"><label>Existing Bike Photos</label><div id="existingPhotos" class="details-photos"></div><div class="details-note">Existing photos are kept. You can add more below.</div></div>
 <div class="details-field"><label for="editBikePhotos">Add Bike Photos</label><input id="editBikePhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple><div class="details-note">Up to 8 files per update · max 8 MB each</div></div>
@@ -179,6 +179,7 @@
 <script src="/movements.js"></script>
 <script src="/specialist-admin.js"></script>
 <script src="/workflow-admin.js"></script>
+<script src="/completed-auctions.js"></script>
 <script src="/admin-navigation.js"></script>
 <script src="/admin.js"></script>
 <script src="/auction.js"></script>

@@ -44,7 +44,7 @@
   function showDashboard(user) {
     window.bkAdminPermissions=[];
     hideDetailsPanel();
-    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives","movement","purchasework","documentswork","mechanicwork","workflow"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
+    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives","movement","purchasework","documentswork","mechanicwork","workflow","completed"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
     document.querySelector?.(".admin-shell")?.classList.add("is-dashboard");
     loginPanel.classList.remove("active");
     dashboardPanel.classList.add("active");
@@ -59,7 +59,7 @@
     window.bkAdminPermissions=[];
     hideDetailsPanel();
     bikeList.innerHTML="";
-    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives","movement","purchasework","documentswork","mechanicwork","workflow"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
+    for(const key of ["finance","handover","documents","costs","reports","activity","staff","backups","purchases","executives","movement","purchasework","documentswork","mechanicwork","workflow","completed"]){const body=document.getElementById(key+"Body");if(body)body.innerHTML="";}
     dashboardPanel.classList.remove("active");
     loginPanel.classList.add("active");
     loginMsg.textContent = message;
@@ -117,7 +117,7 @@
       if (!res.ok) throw new Error(data.error || "Could not load bike");
       const b = data.bike;
       const profile=typeof b.detail_profile==='string'?JSON.parse(b.detail_profile):b.detail_profile||{};
-      for(const key of ["engineNumber", "chassisNumber", "registrationDate", "inspectionNotes", "registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])setValue("edit"+key[0].toUpperCase()+key.slice(1),profile[key]);
+      for(const key of ["engineNumber", "chassisNumber", "registrationDate", "inspectionNotes", "registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine"])setValue("edit"+key[0].toUpperCase()+key.slice(1),profile[key]);
       setValue("editBikeId", b.id); setValue("editBrand", b.brand); setValue("editModel", b.model);
       setValue("editYear", b.year); setValue("editRegistrationNumber", b.registration_number);
       setValue("editKilometersDriven", b.kilometers_driven); setValue("editOwnershipCount", b.ownership_count);
@@ -198,7 +198,7 @@
       const fd = new FormData();
       for(const key of saleKeys){const field=document.getElementById("sale"+key[0].toUpperCase()+key.slice(1));if(!field.disabled)fd.set(key,field.value);}
       for (const [field, id2] of [["brand","editBrand"],["model","editModel"],["year","editYear"],["registrationNumber","editRegistrationNumber"],["kilometersDriven","editKilometersDriven"],["ownershipCount","editOwnershipCount"],["fuelType","editFuelType"],["status","editStatus"],["conditionNotes","editConditionNotes"]]) fd.set(field, document.getElementById(id2).value.trim());
-      for(const key of ["engineNumber", "chassisNumber", "registrationDate", "inspectionNotes", "registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine", "vehicleRating"])fd.set(key,document.getElementById("edit"+key[0].toUpperCase()+key.slice(1)).value);
+      for(const key of ["engineNumber", "chassisNumber", "registrationDate", "inspectionNotes", "registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine"])fd.set(key,document.getElementById("edit"+key[0].toUpperCase()+key.slice(1)).value);
       for (const file of document.getElementById("editBikePhotos").files) fd.append("bikePhotos", file);
       for(const kind of ["deliveryPhoto","saleReceipt"]){const file=document.getElementById(kind).files[0];if(file)fd.append(kind,file);}
       const rc = document.getElementById("editRcDocument").files[0]; if (rc) fd.append("rcDocument", rc);
