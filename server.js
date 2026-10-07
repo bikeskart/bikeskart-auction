@@ -14,6 +14,7 @@ const accountRoutes = require("./src/routes/accountRoutes");
 const auctions = require("./src/models/auctionModel");
 
 const app = express();
+app.set("trust proxy", require("./src/utils/trustProxy").trustProxyHops(env.nodeEnv, process.env.TRUST_PROXY_HOPS));
 
 const { uploadRoot } = require("./src/middleware/upload");
 app.use(helmet());
