@@ -1,5 +1,5 @@
 const crypto=require('node:crypto');
-const scopes=['inventory','auctions','notifications'];
+const scopes=['inventory','auctions','notifications','purchase','documents','mechanic'];
 const textFields={collectedBy:190,collectorPhone:20,deliveryNotes:1000,documentNotes:1000};
 const enumFields={rcProgress:['Pending','Received','Handed over'],nocProgress:['Not required','Pending','Received','Handed over'],hpProgress:['Not required','Pending','Cleared'],transferProgress:['Pending','Submitted','Completed']};
 const moneyFields=['purchasePrice','transportCost','repairCost','documentCost','otherCost'];
