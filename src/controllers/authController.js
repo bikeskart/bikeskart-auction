@@ -63,7 +63,8 @@ async function login(req, res, next) {
   try {
     const { email, password } = req.body;
 
-    const user = await userModel.findByEmail(email);
+    let user = await userModel.findByEmail(req.loginEmailExact || email);
+    if (!user && req.loginEmailExact && req.loginEmailExact !== email) user = await userModel.findByEmail(email);
     // Same error for "no such user" and "wrong password" — don't let
     // an attacker enumerate which emails are registered.
     const invalidCreds = () =>
