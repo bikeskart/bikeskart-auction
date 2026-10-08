@@ -11,10 +11,17 @@ import android.view.*;
 import android.widget.*;
 public class MainActivity extends Activity {
  private WebView web; private ProgressBar progress; private ValueCallback<Uri[]> files;
+ // Persist the HttpOnly refresh cookie across WebView/process restarts.
+ private void persistSession(){CookieManager.getInstance().flush();}
+ protected void onPause(){persistSession();super.onPause();}
+ protected void onStop(){persistSession();super.onStop();}
  private boolean internal(Uri uri) { return "https".equals(uri.getScheme()) && "auction.bikeskart.com".equals(uri.getHost()); }
- private boolean navigate(Uri uri) { if(internal(uri)) return false; String s=uri.getScheme(); if("https".equals(s)||"http".equals(s)||"tel".equals(s)||"mailto".equals(s)) { try { startActivity(new Intent(Intent.ACTION_VIEW,uri)); } catch(Exception e) { Toast.makeText(this,"No app available to open this link",Toast.LENGTH_SHORT).show(); } } return true; }
+ private boolean appDownload(Uri uri){return internal(uri)&&uri.getUserInfo()==null&&uri.getQuery()==null&&uri.getFragment()==null&&uri.getPath()!=null&&uri.getPath().matches("/downloads/BikesKart-Auction-v[0-9.]+\\.apk");}
+ private void openLink(Uri uri){try{startActivity(new Intent(Intent.ACTION_VIEW,uri));}catch(Exception e){Toast.makeText(this,"No app available to open this link",Toast.LENGTH_SHORT).show();}}
+ private boolean navigate(Uri uri) { if(appDownload(uri)){openLink(uri);return true;} if(internal(uri)) return false; String s=uri.getScheme(); if("https".equals(s)||"http".equals(s)||"tel".equals(s)||"mailto".equals(s))openLink(uri); return true; }
  private String targetUrl(){String id=getIntent().getStringExtra("auctionId");return id!=null&&id.matches("[1-9][0-9]{0,14}")?"https://auction.bikeskart.com/?auction="+id:"https://auction.bikeskart.com";}
  private void publishToken(String token){if(web==null||web.getUrl()==null||!internal(Uri.parse(web.getUrl())))return;boolean allowed=android.os.Build.VERSION.SDK_INT<24||getSystemService(android.app.NotificationManager.class).areNotificationsEnabled();String value=token!=null?JSONObject.quote(token):"null";web.evaluateJavascript("window.BKPushDevice={token:"+value+",enabled:"+allowed+"};window.dispatchEvent(new CustomEvent('bk-push-token',{detail:window.BKPushDevice}));",null);}
+ private void publishAppVersion(){if(web==null||web.getUrl()==null||!internal(Uri.parse(web.getUrl())))return;web.evaluateJavascript("window.BKAppVersion={versionCode:"+BuildConfig.VERSION_CODE+",versionName:"+JSONObject.quote(BuildConfig.VERSION_NAME)+"};window.dispatchEvent(new Event('bk-app-version'));",null);}
  private void syncPush(){FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task->{if(task.isSuccessful()){getSharedPreferences("push",MODE_PRIVATE).edit().putString("token",task.getResult()).apply();publishToken(task.getResult());}});}
  protected void onResume(){super.onResume();syncPush();}
  protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);web.loadUrl(targetUrl());}
@@ -24,9 +31,11 @@ public class MainActivity extends Activity {
  if(android.os.Build.VERSION.SDK_INT>=30) root.setOnApplyWindowInsetsListener(new View.OnApplyWindowInsetsListener(){public WindowInsets onApplyWindowInsets(View v,WindowInsets i){android.graphics.Insets b=i.getInsets(WindowInsets.Type.systemBars()); v.setPadding(b.left,b.top,b.right,b.bottom); return i;}}); else root.setFitsSystemWindows(true);
  progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); root.addView(progress,new LinearLayout.LayoutParams(-1,6));
  web=new WebView(this); root.addView(web,new LinearLayout.LayoutParams(-1,0,1));
+ web.setDownloadListener((url,userAgent,contentDisposition,mimeType,contentLength)->{Uri uri=Uri.parse(url);if(appDownload(uri))openLink(uri);});
+ CookieManager.getInstance().setAcceptCookie(true);
  WebSettings s=web.getSettings(); s.setJavaScriptEnabled(true); s.setDomStorageEnabled(true); s.setAllowFileAccess(false); s.setAllowContentAccess(false); s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
  web.setWebViewClient(new WebViewClient(){
- public void onPageFinished(WebView v,String url){syncPush();}
+ public void onPageFinished(WebView v,String url){persistSession();publishAppVersion();syncPush();}
  public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){return navigate(r.getUrl());}
  public boolean shouldOverrideUrlLoading(WebView v,String u){return navigate(Uri.parse(u));}
  public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e){if(r.isForMainFrame()){Toast.makeText(MainActivity.this,"Connection failed. Check your internet and reopen the app.",Toast.LENGTH_LONG).show();}}
@@ -40,5 +49,6 @@ public class MainActivity extends Activity {
  protected void onActivityResult(int r,int c,Intent i){super.onActivityResult(r,c,i);if(r==7&&files!=null){files.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(c,i));files=null;}}
  protected void onSaveInstanceState(Bundle b){web.saveState(b);super.onSaveInstanceState(b);}
  public void onBackPressed(){if(web.canGoBack())web.goBack();else super.onBackPressed();}
- protected void onDestroy(){if(files!=null)files.onReceiveValue(null);web.destroy();super.onDestroy();}
+ protected void onDestroy(){if(files!=null)files.onReceiveValue(null);persistSession();web.destroy();super.onDestroy();}
 }
+
