@@ -1,0 +1,13 @@
+const express = require('express');
+const rateLimit = require('express-rate-limit');
+const {requireAuth} = require('../middleware/auth');
+const users = require('../models/userModel');
+const {eligible} = require('../utils/auctionRules');
+const {worker} = require('../utils/auctionNotifications');
+const router=express.Router();
+const asyncRoute=fn=>(req,res,next)=>Promise.resolve(fn(req,res)).catch(next);
+router.use(requireAuth);
+router.use(rateLimit({windowMs:60000,max:20,standardHeaders:true,legacyHeaders:false}));
+router.post('/devices',asyncRoute(async(req,res)=>{const user=await users.findById(req.user.sub);eligible(user,['dealer','bidder']);await worker().register(user.id,req.body.token);res.status(201).json({registered:true});}));
+router.delete('/devices',asyncRoute(async(req,res)=>{await worker().unregister(req.user.sub,req.body.token);res.json({removed:true});}));
+module.exports=router;

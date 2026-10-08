@@ -58,6 +58,7 @@ app.use("/api/admin/backups", require("./src/routes/backupRoutes"));
 app.use("/api/admin/bike-import", require("./src/routes/bulkBikeRoutes"));
 app.use("/api/admin/bikes", bikeRoutes);
 app.use("/api/auctions", auctionRoutes);
+app.use("/api/notifications", require("./src/routes/notificationRoutes"));
 app.use("/api/admin/accounts", accountRoutes);
 app.use("/api/admin/winners", require("./src/routes/winnerRoutes"));
 app.use((err, req, res, next) => {
@@ -150,8 +151,10 @@ if (require.main === module) app.listen(env.port, "0.0.0.0", () => {
     if (err.code !== 'ER_NO_SUCH_TABLE') console.error('Auction closing failed:', err.code || err.message);
   });
   require("./src/utils/adminBackups").startScheduler(db);
+  try { require("./src/utils/auctionNotifications").worker().start(); } catch (error) { console.error("Auction push configuration failed. Check Firebase server settings."); }
   sweep();
   setInterval(sweep, 5000).unref();
 });
 
 module.exports = app;
+
