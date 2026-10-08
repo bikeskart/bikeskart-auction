@@ -21,7 +21,7 @@ The server uses the official FCM HTTP v1 API with an OAuth access token minted u
 
 ## Install and test
 
-1. Install Android APK version 1.2-test over the previous APK. Allow notifications and log in as an approved, active dealer. The server must be deployed before the device can register.
+1. Install Android APK version 1.3-test with the approved grey, white and lime BK icon. This test build uses a new signing key because the previous temporary test key is unavailable, so uninstall the earlier test APK first, then install and log in again. Allow notifications and log in as an approved, active dealer. The server must be deployed before the device can register.
 2. Schedule a short test auction a few minutes ahead. Lock the dealer phone before the start time.
 3. At the scheduled start, confirm the phone receives a notification. Tap it and confirm the correct lot opens. Also test an alert while the app is open.
 4. Reopen the app after changing Android notification permission. It removes the device registration when notifications are disabled. Explicit dealer logout also unregisters the device.
