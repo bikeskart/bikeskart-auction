@@ -2,9 +2,11 @@ plugins { id 'com.android.application'; id 'com.google.gms.google-services' }
 android {
  namespace 'com.bikeskart.auction'
  compileSdk 35
- defaultConfig { applicationId 'com.bikeskart.auction'; minSdk 23; targetSdk 35; versionCode 5; versionName '1.4-test' }
+ buildFeatures { buildConfig true }
+ defaultConfig { applicationId 'com.bikeskart.auction'; minSdk 23; targetSdk 35; versionCode 6; versionName '1.5-test' }
  compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
  signingConfigs { localTest { storeFile file(System.getenv('BK_SIGNING_KEY') ?: '/tmp/bk-android-signing/test.keystore'); storePassword 'android'; keyAlias 'androiddebugkey'; keyPassword 'android' } }
  buildTypes { debug { signingConfig signingConfigs.localTest } }
 }
 dependencies { implementation 'com.google.firebase:firebase-messaging:24.1.2' }
+

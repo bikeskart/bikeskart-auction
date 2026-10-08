@@ -1,0 +1,22 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const crypto=require('node:crypto');
+const express=require('express');
+const release=require('../android/release.json');
+test('release metadata and APK download agree, and responses avoid stale caching',async t=>{
+  const app=express();app.use(require('../src/routes/appReleaseRoutes'));
+  const server=app.listen(0,'127.0.0.1');
+  await new Promise(resolve=>server.once('listening',resolve));
+  t.after(()=>new Promise(resolve=>server.close(resolve)));
+  const base='http://127.0.0.1:'+server.address().port;
+  const info=await fetch(base+'/api/app/android-release');
+  assert.equal(info.status,200);assert.equal(info.headers.get('cache-control'),'no-store');
+  const data=await info.json();assert.equal(data.versionCode,6);
+  assert.equal(data.downloadUrl,'https://auction.bikeskart.com/downloads/'+release.fileName);
+  const apk=await fetch(base+new URL(data.downloadUrl).pathname);
+  assert.equal(apk.status,200);assert.match(apk.headers.get('content-disposition'),/attachment/);
+  assert.equal(apk.headers.get('content-type'),'application/vnd.android.package-archive');
+  const bytes=Buffer.from(await apk.arrayBuffer());
+  assert.equal(bytes.length,data.sizeBytes);assert.equal(bytes.subarray(0,2).toString(),'PK');
+  assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),data.sha256);
+});
