@@ -9,9 +9,10 @@ function screen(admin,fetcher){
   const document={body:{classList:{add:c=>classes.add(c),remove:c=>classes.delete(c),contains:c=>classes.has(c)}},hidden:false,getElementById(id){if(admin&&['dealerLogin'].includes(id)||!admin&&id==='auctionForm')return null;return element(id);},querySelectorAll(){return [];}};
   const window={addEventListener(type,fn){listeners[type]=fn;},bkAdminApi:fetcher};
   const formData=class {constructor(form){this.values=form.data||{};}*[Symbol.iterator](){yield*Object.entries(this.values);}};
-  const context={document,window,fetch:fetcher,Headers,URLSearchParams,FormData:formData,Intl,Date,console,crypto:require('node:crypto').webcrypto,setInterval(){}};
+  const storage=new Map();
+  const context={document,window,location:{search:''},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},fetch:fetcher,Headers,URL,URLSearchParams,FormData:formData,Intl,Date,console,crypto:require('node:crypto').webcrypto,setInterval(){}};
   vm.runInNewContext(fs.readFileSync(require.resolve('../auction.js'),'utf8'),context);
-  return {elements,element,listeners,document};
+  return {elements,element,listeners,document,window};
 }
 const response=data=>({ok:true,status:200,json:async()=>data});
 test('admin scheduling retains form after asynchronous requests and sends timezone dates',async()=>{
@@ -75,3 +76,31 @@ test('card bidding retries a lost response with the same ID and includes swipeab
 test('accounts-only staff initialization skips auction and bike-option requests',async()=>{const requested=[];const s=screen(true,async url=>{requested.push(url);return response(url.endsWith('/access')?{scopes:['accounts']}:{rows:[],total:0});});await s.listeners['bk-admin-ready']();assert.ok(requested.some(url=>url.includes('/accounts')));assert.ok(!requested.some(url=>url.startsWith('/api/auctions')));assert.ok(!requested.some(url=>url.includes('/bike-options')));});
 test('only dealers with a losing live bid see the red Outbid marker',async()=>{for(const [my_bid,is_leading,marked]of [[50000,false,true],[55000,true,false],[null,false,false]]){const now=new Date().toISOString();const s=screen(false,async url=>response(url==='/api/auth/refresh'?{accessToken:'t'}:url==='/api/auth/me'?{user:{id:3,role:'dealer'}}:{rows:[{id:1,bike_id:2,brand:'Honda',model:'Activa',phase:'live',starting_price:50000,highest_bid:55000,min_increment:500,my_bid,is_leading,images:[]}],total:1,serverNow:now}));await new Promise(r=>setImmediate(r));assert.equal(s.element('dealerAuctions').innerHTML.includes('● Outbid'),marked);}});
 test('vehicle info includes engine and chassis identifiers without an inspection rating',async()=>{const now=new Date().toISOString(),a={id:1,phase:'live',starting_price:50000,min_increment:500};const s=screen(false,async url=>response(url==='/api/auth/refresh'?{accessToken:'t'}:url==='/api/auth/me'?{user:{id:3,role:'dealer'}}:url==='/api/auctions/1'?{auction:a,bike:{brand:'Honda',model:'Activa',images:[],detail_profile:{engineNumber:'ENG123',chassisNumber:'CHS456',vehicleRating:5}},bids:[],serverNow:now}:{rows:[a],total:1,serverNow:now}));await new Promise(r=>setImmediate(r));await s.element('dealerAuctions').onclick({target:{closest:sel=>sel==='[data-lot]'?{dataset:{lot:'1'}}:null}});const html=s.element('lotDetail').innerHTML;assert.match(html,/ENG123/);assert.match(html,/CHS456/);assert.ok(!html.includes('Vehicle Rating'));});
+
+// Native FCM tokens may arrive after the registration response.
+test('pending registration registers a late native token before first dealer login',async()=>{
+ const calls=[];
+ const s=screen(false,async(url,opts)=>{calls.push({url,opts});if(url==='/api/auth/refresh')return {ok:false,status:401,json:async()=>({})};if(url==='/api/auth/register')return response({message:'Pending approval',pendingPushToken:'scoped-registration-credential'});return response({registered:true});});
+ const form=s.element('dealerRegister');form.data={fullName:'Dealer',email:'dealer@example.com'};
+ await form.onsubmit({preventDefault(){},currentTarget:form,submitter:{disabled:false}});
+ assert.equal(calls.filter(c=>c.url.includes('pending-devices')).length,0);
+ s.listeners['bk-push-token']({detail:{token:'native-device',enabled:true}});
+ await new Promise(r=>setImmediate(r));
+ const request=calls.find(c=>c.url==='/api/notifications/pending-devices');assert.ok(request);
+ assert.deepEqual(JSON.parse(request.opts.body),{pendingPushToken:'scoped-registration-credential',token:'native-device',enabled:true});
+ assert.ok(!calls.some(c=>c.url==='/api/notifications/devices'));
+});
+
+test('dropdown update button checks latest version and downloads the configured APK',async()=>{
+ let downloaded;const s=screen(false,async url=>url==='/api/auth/refresh'?{ok:false,status:401,json:async()=>({})}:response({available:true,versionCode:5,versionName:'1.4',downloadUrl:'https://downloads.example.com/auction.apk'}));
+ s.listeners['bk-push-token']({detail:{versionCode:4,enabled:false}});
+ // WebView hands this HTTPS navigation to the phone browser.
+ // Supply navigation on the mocked browser window through the existing context.
+ s.window.location={assign:url=>downloaded=url};
+ await s.element('updateApp').onclick();assert.equal(downloaded,'https://downloads.example.com/auction.apk');assert.match(s.element('updateApp').textContent,/v1.4/);
+ s.listeners['bk-push-token']({detail:{versionCode:5,enabled:false}});downloaded=null;
+ await s.element('updateApp').onclick();assert.equal(downloaded,null);assert.equal(s.element('updateAppMsg').textContent,'Your app is up to date.');
+});
+test('dropdown update button explains when no APK has been published',async()=>{
+ const s=screen(false,async url=>url==='/api/auth/refresh'?{ok:false,status:401,json:async()=>({})}:response({available:false}));await s.element('updateApp').onclick();assert.equal(s.element('updateAppMsg').textContent,'No app update is available yet.');
+});

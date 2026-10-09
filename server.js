@@ -38,6 +38,7 @@ app.use(express.urlencoded({ extended: true }));
  * Authentication routes
  * DO NOT change these.
  */
+app.get("/api/app-update",(req,res)=>{res.set("Cache-Control","no-store");res.json(require("./src/utils/appUpdate").appUpdate());});
 app.use("/api/auth", authRoutes);
 app.use("/api/admin-registration", require("./src/routes/adminRegistrationRoutes"));
 

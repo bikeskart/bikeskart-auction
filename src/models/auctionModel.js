@@ -1,5 +1,6 @@
 const {ensureBikeProfile,readProfile}=require("../utils/bikeProfile");
 const rules = require('../utils/auctionRules');
+const {ensureOutbidNotifications,queueOutbid}=require('../utils/outbidNotifications');
 const {auctionFilters} = require('../utils/auctionFilters');
 const isoSQL = value => new Date(value).toISOString().slice(0,23).replace('T',' ');
 const iso = value => value == null ? null : new Date(typeof value === 'string' && !value.includes('T') ? value.replace(' ','T')+'Z' : value).toISOString();
@@ -62,6 +63,7 @@ function createAuctionModel(pool) {
     const amount = rules.money(body.amount);
     const requestId = String(body.requestId || '');
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)) rules.fail('A valid bid request ID is required');
+    await ensureOutbidNotifications(pool);
     const result = await transaction(async c => {
       const a = await locked(c,id);
       await user(c,bidderId,['dealer','bidder']);
@@ -77,6 +79,7 @@ function createAuctionModel(pool) {
       }
       rules.checkBid(a,amount,now);
       const [insert] = await c.query('INSERT INTO auction_bids (auction_id,bidder_id,amount,request_id,created_at) VALUES (?,?,?,?,UTC_TIMESTAMP(3))',[id,bidderId,amount,requestId]);
+      await queueOutbid(c,a,insert.insertId,bidderId);
       await c.query('UPDATE auctions SET highest_bid = ?, highest_bidder_id = ?, bid_count = bid_count + 1 WHERE id = ?',[amount,bidderId,id]);
       return {bidId:insert.insertId,amount,replayed:false};
     });

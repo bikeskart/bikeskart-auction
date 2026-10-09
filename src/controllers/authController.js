@@ -53,6 +53,7 @@ async function register(req, res, next) {
       message:
         "Account created. An admin will review and approve your account before you can log in.",
       user: publicUser(user),
+      pendingPushToken: require("../utils/tokens").signPendingPushToken(user),
     });
   } catch (err) {
     next(err);
@@ -81,7 +82,7 @@ async function login(req, res, next) {
     if (!user.is_verified) {
       return res
         .status(403)
-        .json({ error: "This account is pending admin approval" });
+        .json({ error: "This account is pending admin approval", pendingPushToken: require("../utils/tokens").signPendingPushToken(user) });
     }
 
     const accessToken = signAccessToken(user);

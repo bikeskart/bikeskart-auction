@@ -38,6 +38,15 @@ function verifyRefreshToken(token) {
   return payload;
 }
 
+// This credential only permits push-device registration; it cannot log in or bid.
+function signPendingPushToken(user) {
+  return jwt.sign({sub:user.id,token_use:'pending_push'},env.jwt.accessSecret,{expiresIn:'30d'});
+}
+function verifyPendingPushToken(token) {
+  const value=jwt.verify(token,env.jwt.accessSecret);
+  if(value.token_use!=='pending_push') throw new Error('Invalid token type');
+  return value;
+}
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
@@ -48,4 +57,6 @@ module.exports = {
   signRefreshToken,
   verifyRefreshToken,
   hashToken,
+  signPendingPushToken,
+  verifyPendingPushToken,
 };
