@@ -62,6 +62,17 @@
     }catch{console.warn('Approval alerts could not be registered; retrying.');}})().finally(()=>pendingPushRequest=null);
     return pendingPushRequest;
   }
+  async function loadWhatsAppPreferences(){
+    if(!$('whatsappPreferences'))return;
+    try{const data=await api('/api/whatsapp/preferences');$('whatsappTransactions').checked=Boolean(data.transactions);$('whatsappAuctions').checked=Boolean(data.auctions);$('whatsappPreferencesMsg').textContent='';}
+    catch{$('whatsappPreferencesMsg').textContent='Could not load WhatsApp preferences. Please try again.';}
+  }
+  if($('saveWhatsAppPreferences'))$('saveWhatsAppPreferences').onclick=async()=>{
+    const button=$('saveWhatsAppPreferences');button.disabled=true;
+    try{await api('/api/whatsapp/preferences',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({transactions:$('whatsappTransactions').checked,auctions:$('whatsappAuctions').checked})});$('whatsappPreferencesMsg').textContent='WhatsApp preferences saved.';}
+    catch(e){$('whatsappPreferencesMsg').textContent=e.message;}
+    finally{button.disabled=false;}
+  };
   async function checkAppUpdate(download=false){
     const button=$('updateApp'),message=$('updateAppMsg');if(!button)return;
     if(download)button.disabled=true;
@@ -109,7 +120,7 @@
   async function load(){const sequence=++loadSequence,params=new URLSearchParams({page,phase,...filters});const data=await api('/api/auctions?'+params);if(sequence!==loadSequence||!token)return;rows=data.rows;sync(data.serverNow);render();pager('dealer',page,data.total);}
   if($('auctionSearch'))$('auctionSearch').onsubmit=e=>{e.preventDefault();filters=Object.fromEntries([...new FormData(e.currentTarget)].filter(([,v])=>String(v).trim()));page=1;load().catch(e=>$('dealerMsg').textContent=e.message);};
   if($('clearAuctionSearch'))$('clearAuctionSearch').onclick=()=>{$('auctionSearch').reset();filters={};page=1;load().catch(e=>$('dealerMsg').textContent=e.message);};
-  async function signedIn(user){rememberPendingPush('');currentUser=user;loggingOut=false;lastPushRegistration='';registerPush();phase='live';page=1;document.body?.classList.add('dealer-mode');document.querySelectorAll('[data-phase]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.phase==='live')));if($('dealerHeading'))$('dealerHeading').textContent='';if($('dealerIntro'))$('dealerIntro').textContent='';$('dealerLogin').hidden=true;$('dealerSession').hidden=false;if($('dealerAccess'))$('dealerAccess').hidden=true;if($('authDialog'))$('authDialog').close();if($('accountMenuLabel'))$('accountMenuLabel').textContent='☰ Menu';if($('accountMenu'))$('accountMenu').open=false;if($('accountMsgMenu'))$('accountMsgMenu').textContent='';$('dealerName').textContent=(user.full_name||user.email)+' · '+user.role;$('dealerMsg').textContent='';await load();$('live').scrollIntoView?.({behavior:'smooth',block:'start'});await openNotificationAuction();}
+  async function signedIn(user){rememberPendingPush('');currentUser=user;loggingOut=false;lastPushRegistration='';registerPush();phase='live';page=1;document.body?.classList.add('dealer-mode');document.querySelectorAll('[data-phase]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.phase==='live')));if($('dealerHeading'))$('dealerHeading').textContent='';if($('dealerIntro'))$('dealerIntro').textContent='';$('dealerLogin').hidden=true;$('dealerSession').hidden=false;if($('dealerAccess'))$('dealerAccess').hidden=true;if($('authDialog'))$('authDialog').close();if($('accountMenuLabel'))$('accountMenuLabel').textContent='☰ Menu';if($('accountMenu'))$('accountMenu').open=false;if($('accountMsgMenu'))$('accountMsgMenu').textContent='';$('dealerName').textContent=(user.full_name||user.email)+' · '+user.role;$('dealerMsg').textContent='';loadWhatsAppPreferences();await load();$('live').scrollIntoView?.({behavior:'smooth',block:'start'});await openNotificationAuction();}
   function openAuth(view='login'){if(token)return;const registration=view==='register';$('dealerLogin').hidden=registration;if($('registrationPane'))$('registrationPane').hidden=!registration;document.querySelectorAll('.auth-tabs [data-auth-view]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.authView===view)));if($('accountMenu'))$('accountMenu').open=false;if($('authDialog')&&!$('authDialog').open)$('authDialog').showModal();}
   document.querySelectorAll('[data-auth-view]').forEach(button=>button.addEventListener('click',()=>openAuth(button.dataset.authView)));
   document.querySelectorAll('a[href="#register"]').forEach(link=>link.addEventListener('click',e=>{e.preventDefault();openAuth('register');}));

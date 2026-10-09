@@ -121,8 +121,8 @@
       setValue("editBikeId", b.id); setValue("editBrand", b.brand); setValue("editModel", b.model);
       setValue("editYear", b.year); setValue("editRegistrationNumber", b.registration_number);
       setValue("editKilometersDriven", b.kilometers_driven); setValue("editOwnershipCount", b.ownership_count);
-      document.getElementById('deliveryPhoto').value='';document.getElementById('saleReceipt').value='';
-      document.getElementById('saleDocuments').innerHTML=(b.sale_profile?.documents||[]).map(d=>`<p><button type="button" data-evidence-bike="${esc(b.id)}" data-evidence-file="${esc(d.filename)}">View ${d.kind==='deliveryPhoto'?'delivery photo':'sale receipt'}</button> · ${esc(d.uploadedAt||'')}</p>`).join('');
+      document.getElementById('deliveryPhoto').value='';document.getElementById('saleReceipt').value='';if(document.getElementById('saleInvoice'))document.getElementById('saleInvoice').value='';
+      document.getElementById('saleDocuments').innerHTML=(b.sale_profile?.documents||[]).map(d=>`<p><button type="button" data-evidence-bike="${esc(b.id)}" data-evidence-file="${esc(d.filename)}">View ${d.kind==='deliveryPhoto'?'delivery photo':d.kind==='saleInvoice'?'buyer invoice':'sale receipt'}</button> · ${esc(d.uploadedAt||'')}</p>`).join('');
       for(const key of saleKeys)setValue("sale"+key[0].toUpperCase()+key.slice(1),b.sale_profile?.[key]);
       setValue("editFuelType", b.fuel_type); setValue("editStatus", b.status); setValue("editConditionNotes", b.condition_notes);
       window.dispatchEvent?.(new CustomEvent("bk-admin-bike",{detail:b}));
@@ -200,7 +200,7 @@
       for (const [field, id2] of [["brand","editBrand"],["model","editModel"],["year","editYear"],["registrationNumber","editRegistrationNumber"],["kilometersDriven","editKilometersDriven"],["ownershipCount","editOwnershipCount"],["fuelType","editFuelType"],["status","editStatus"],["conditionNotes","editConditionNotes"]]) fd.set(field, document.getElementById(id2).value.trim());
       for(const key of ["engineNumber", "chassisNumber", "registrationDate", "inspectionNotes", "registrationYear", "hpStatus", "nocStatus", "rcAvailable", "keysCount", "insuranceStatus", "engineNoise", "smoke", "selfStart", "clutchPlate", "timingChainNoise", "engineCondition", "batteryWorking", "chassis", "bodyLine"])fd.set(key,document.getElementById("edit"+key[0].toUpperCase()+key.slice(1)).value);
       for (const file of document.getElementById("editBikePhotos").files) fd.append("bikePhotos", file);
-      for(const kind of ["deliveryPhoto","saleReceipt"]){const file=document.getElementById(kind).files[0];if(file)fd.append(kind,file);}
+      for(const kind of ["deliveryPhoto","saleReceipt","saleInvoice"]){const file=document.getElementById(kind).files[0];if(file)fd.append(kind,file);}
       const rc = document.getElementById("editRcDocument").files[0]; if (rc) fd.append("rcDocument", rc);
       const res = await api(`/api/admin/bikes/${encodeURIComponent(id)}`, {method:"PUT", body:fd});
       const data = await res.json().catch(() => ({}));

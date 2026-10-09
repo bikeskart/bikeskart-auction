@@ -31,7 +31,7 @@ app.use(
 
 app.use(cookieParser());
 
-app.use(express.json());
+app.use(express.json({verify:(req,res,buf)=>{if(req.originalUrl.split("?")[0]==="/api/whatsapp/webhook")req.rawBody=Buffer.from(buf);}}));
 app.use(express.urlencoded({ extended: true }));
 
 /*
@@ -59,6 +59,7 @@ app.use("/api/admin/backups", require("./src/routes/backupRoutes"));
 app.use("/api/admin/bike-import", require("./src/routes/bulkBikeRoutes"));
 app.use("/api/admin/bikes", bikeRoutes);
 app.use("/api/auctions", auctionRoutes);
+app.use("/api/whatsapp", require("./src/routes/whatsappRoutes"));
 app.use("/api/notifications", require("./src/routes/notificationRoutes"));
 app.use("/api/admin/accounts", accountRoutes);
 app.use("/api/admin/winners", require("./src/routes/winnerRoutes"));
@@ -123,7 +124,7 @@ app.get("*", (req, res) => {
  */
 app.use((err, req, res, next) => {
   if (err.name === "MulterError") {
-    const message = err.code === "LIMIT_FILE_SIZE" ? "Each upload must be 8 MB or smaller." : err.code === "LIMIT_UNEXPECTED_FILE" || err.code === "LIMIT_FILE_COUNT" ? "Upload up to 8 bike photos, 1 RC document, 1 delivery photo and 1 sale receipt at a time." : "Could not accept the upload. Please check the selected files.";
+    const message = err.code === "LIMIT_FILE_SIZE" ? "Each upload must be 8 MB or smaller." : err.code === "LIMIT_UNEXPECTED_FILE" || err.code === "LIMIT_FILE_COUNT" ? "Upload up to 8 bike photos, 1 RC document, 1 delivery photo, 1 sale receipt and 1 PDF invoice at a time." : "Could not accept the upload. Please check the selected files.";
     return res.status(400).json({error:message});
   }
   if (err.expose === true && Number.isInteger(err.status) && err.status >= 400 && err.status < 500) return res.status(err.status).json({error:err.message});
@@ -153,6 +154,7 @@ if (require.main === module) app.listen(env.port, "0.0.0.0", () => {
   });
   require("./src/utils/adminBackups").startScheduler(db);
   try { require("./src/utils/auctionNotifications").worker().start(); } catch (error) { console.error("Auction push configuration failed. Check Firebase server settings."); }
+  require("./src/utils/whatsappNotifications").worker().start();
   sweep();
   setInterval(sweep, 5000).unref();
 });

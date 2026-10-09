@@ -101,3 +101,7 @@ migration and a full auction on a staging database before production bidding.
 When the app runs beneath `hbuilds`, uploaded bike photos and private RC files use the shared `hbuilds/uploads` directory rather than a version's application folder. Local development still uses `uploads`. Set `UPLOAD_ROOT` to an absolute path to override this location. Public image URLs remain `/uploads/bikes/...`; RC documents remain accessible only through the authenticated admin route.
 
 After deploying this change, recover uploads retained in earlier Hostinger deployments by running `node scripts/recoverUploads.js` from the current application's `nodejs` directory. It copies files from retained versions and last-source, skips existing destination files, and does not change the database. Files already removed by the hosting provider need restoration from a backup or re-upload.
+
+## WhatsApp notification setup
+
+See [WhatsApp notifications](docs/whatsapp-notifications.md) for dealer opt-in, new/live auction and confirmed-winner messages, payment-confirmed PDF invoices, buyer pickup location, delivery status, Meta templates and deployment configuration. The feature remains disabled until Cloud API setup is complete.
