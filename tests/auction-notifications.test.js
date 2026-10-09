@@ -19,6 +19,7 @@ function fakePool({claim=1}={}) {
   const calls=[];
   return {calls,async query(sql,args) {
     calls.push({sql,args});
+    if(sql.startsWith('SELECT p.user_id'))return [[]];
     if(sql.startsWith('SELECT p.auction_id'))return [[{auction_id:42,token_hash:'hash',attempts:0,fcm_token:'token',brand:'Honda',model:'Activa',ttl_seconds:120}]];
     if(sql.includes("SET p.state='processing'"))return [{affectedRows:claim}];
     return [{affectedRows:1}];
@@ -32,7 +33,7 @@ test('worker uses eligible users and UTC live-window filters, then records deliv
   const pool=fakePool();let sent;
   const worker=createNotificationWorker(pool,{sender:{configured:()=>true,send:async(...args)=>{sent=args;}}});
   await worker.run();assert.equal(sent[1].auctionId,'42');assert.ok(sent[2]>=119&&sent[2]<=120);
-  const enqueue=pool.calls.find(c=>c.sql.startsWith('INSERT IGNORE')).sql;
+  const enqueue=pool.calls.find(c=>c.sql.startsWith('INSERT IGNORE INTO auction_push_deliveries')).sql;
   assert.match(enqueue,/u.is_active=1 AND u.is_verified=1/);
   assert.match(enqueue,/a.starts_at <= UTC_TIMESTAMP\(3\) AND a.ends_at > UTC_TIMESTAMP\(3\)/);
   assert.ok(pool.calls.some(c=>c.sql.includes("SET state='sent'")));

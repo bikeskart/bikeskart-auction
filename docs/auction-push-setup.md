@@ -36,3 +36,12 @@ On first enablement, already-live auctions may produce one alert per registered 
 Use JDK 17, Gradle 8.11.1, Android SDK platform 35 and accepted SDK licenses. Put the downloaded client `google-services.json` in `android/app/` (ignored by Git).
 
 The test build needs a private signing keystore with alias `androiddebugkey` and Android's standard test passwords. For updates, reuse the same original keystore; do not commit it. Set `BK_SIGNING_KEY` to its absolute path, then run `gradle -p android :app:assembleDebug`. Production distribution needs a separate release signing process. The APK currently loads the existing HTTPS auction website in a WebView and uses native Firebase Messaging for alerts. No JavaScript interface exposing native methods is installed; device registration uses an origin-checked native event and the dealer's existing authenticated API session.
+
+
+## Dealer registration approval alerts
+
+Pending dealers can now register their phone before logging in. Registration and a password-verified pending login return a scoped, expiring push credential; this cannot access auctions or approve accounts. The Android web page stores it so device-token and permission changes can be synced while approval is pending. Existing pending dealers should open the app and attempt login once to enable approval alerts.
+
+Admin approval commits a durable event in the same database transaction as the account change. The existing five-second worker sends “Registration approved” to the dealer's registered devices, retries temporary failures and removes invalid device tokens. Repeated saves do not create another approval event. Events are eligible for seven days, giving devices time to reconnect. The additional tables are created automatically.
+
+Deploy the updated Node server and auction.js. The current Android messaging service already displays the supplied title and body, so this feature needs no APK change if the installed APK includes Firebase Messaging. Firebase server credentials and Android notification permission remain required. A tap opens the app where the approved dealer can log in. Test a new pending registration with notifications enabled, close the app, approve from admin, then confirm the phone receives the alert and can log in.

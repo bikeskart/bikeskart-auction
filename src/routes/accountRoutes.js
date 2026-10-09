@@ -5,6 +5,8 @@ const {ensureDealerProfile}=require('../utils/dealerProfile');
 const {requireAuth} = require('../middleware/auth');
 const {findById} = require('../models/userModel');
 const {eligible,positiveId,fail} = require('../utils/auctionRules');
+const {queueApproval}=require('../utils/registrationNotifications');
+const {worker}=require('../utils/auctionNotifications');
 const router = express.Router();
 router.use(requireAuth,(req,res,next) => findById(req.user.sub).then(u => {eligible(u,['admin']);next();}).catch(next));
 router.use(requireAdminScope("accounts"));
@@ -25,8 +27,19 @@ router.patch('/:id',async (req,res,next) => {
       fields.push(`${key} = ?`);values.push(Number(req.body[key]));
     }
     if (!fields.length) fail('No account change provided');
-    const [r] = await pool.query(`UPDATE users SET ${fields.join(',')} WHERE id = ? AND role IN ('dealer','bidder')`,[...values,id]);
-    if (!r.affectedRows) fail('Dealer or bidder not found',404);
+    await worker().ensure();
+    const connection=await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const [[before]]=await connection.query("SELECT id,is_active,is_verified FROM users WHERE id=? AND role IN ('dealer','bidder') FOR UPDATE",[id]);
+      if(!before)fail('Dealer or bidder not found',404);
+      await connection.query(`UPDATE users SET ${fields.join(',')} WHERE id=?`,[...values,id]);
+      const active='is_active' in req.body?req.body.is_active:Boolean(before.is_active);
+      const verified='is_verified' in req.body?req.body.is_verified:Boolean(before.is_verified);
+      if(active&&verified&&(!before.is_active||!before.is_verified))await queueApproval(connection,id);
+      await connection.commit();
+    } catch(error) { await connection.rollback();throw error; }
+    finally { connection.release(); }
     await require("../utils/adminOperations").audit(pool,req.user.sub,"dealer.update",id,Object.fromEntries(fields.map((f,i)=>[f.split(" ")[0],values[i]])));
     res.json({updated:true});
   } catch(e) {next(e);}
