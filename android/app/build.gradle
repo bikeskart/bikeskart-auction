@@ -1,6 +1,7 @@
 plugins { id 'com.android.application'; id 'com.google.gms.google-services' }
 android {
  namespace 'com.bikeskart.auction'
+ buildFeatures { buildConfig true }
  compileSdk 35
  defaultConfig { applicationId 'com.bikeskart.auction'; minSdk 23; targetSdk 35; versionCode 4; versionName '1.3-test' }
  compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }

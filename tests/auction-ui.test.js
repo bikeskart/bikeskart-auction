@@ -10,9 +10,9 @@ function screen(admin,fetcher){
   const window={addEventListener(type,fn){listeners[type]=fn;},bkAdminApi:fetcher};
   const formData=class {constructor(form){this.values=form.data||{};}*[Symbol.iterator](){yield*Object.entries(this.values);}};
   const storage=new Map();
-  const context={document,window,location:{search:''},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},fetch:fetcher,Headers,URLSearchParams,FormData:formData,Intl,Date,console,crypto:require('node:crypto').webcrypto,setInterval(){}};
+  const context={document,window,location:{search:''},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},fetch:fetcher,Headers,URL,URLSearchParams,FormData:formData,Intl,Date,console,crypto:require('node:crypto').webcrypto,setInterval(){}};
   vm.runInNewContext(fs.readFileSync(require.resolve('../auction.js'),'utf8'),context);
-  return {elements,element,listeners,document};
+  return {elements,element,listeners,document,window};
 }
 const response=data=>({ok:true,status:200,json:async()=>data});
 test('admin scheduling retains form after asynchronous requests and sends timezone dates',async()=>{
@@ -89,4 +89,18 @@ test('pending registration registers a late native token before first dealer log
  const request=calls.find(c=>c.url==='/api/notifications/pending-devices');assert.ok(request);
  assert.deepEqual(JSON.parse(request.opts.body),{pendingPushToken:'scoped-registration-credential',token:'native-device',enabled:true});
  assert.ok(!calls.some(c=>c.url==='/api/notifications/devices'));
+});
+
+test('dropdown update button checks latest version and downloads the configured APK',async()=>{
+ let downloaded;const s=screen(false,async url=>url==='/api/auth/refresh'?{ok:false,status:401,json:async()=>({})}:response({available:true,versionCode:5,versionName:'1.4',downloadUrl:'https://downloads.example.com/auction.apk'}));
+ s.listeners['bk-push-token']({detail:{versionCode:4,enabled:false}});
+ // WebView hands this HTTPS navigation to the phone browser.
+ // Supply navigation on the mocked browser window through the existing context.
+ s.window.location={assign:url=>downloaded=url};
+ await s.element('updateApp').onclick();assert.equal(downloaded,'https://downloads.example.com/auction.apk');assert.match(s.element('updateApp').textContent,/v1.4/);
+ s.listeners['bk-push-token']({detail:{versionCode:5,enabled:false}});downloaded=null;
+ await s.element('updateApp').onclick();assert.equal(downloaded,null);assert.equal(s.element('updateAppMsg').textContent,'Your app is up to date.');
+});
+test('dropdown update button explains when no APK has been published',async()=>{
+ const s=screen(false,async url=>url==='/api/auth/refresh'?{ok:false,status:401,json:async()=>({})}:response({available:false}));await s.element('updateApp').onclick();assert.equal(s.element('updateAppMsg').textContent,'No app update is available yet.');
 });

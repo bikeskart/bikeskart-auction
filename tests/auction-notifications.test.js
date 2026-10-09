@@ -19,6 +19,7 @@ function fakePool({claim=1}={}) {
   const calls=[];
   return {calls,async query(sql,args) {
     calls.push({sql,args});
+    if(sql.startsWith('SELECT p.bid_id'))return [[]];
     if(sql.startsWith('SELECT p.user_id'))return [[]];
     if(sql.startsWith('SELECT p.auction_id'))return [[{auction_id:42,token_hash:'hash',attempts:0,fcm_token:'token',brand:'Honda',model:'Activa',ttl_seconds:120}]];
     if(sql.includes("SET p.state='processing'"))return [{affectedRows:claim}];

@@ -1,4 +1,5 @@
 const crypto = require('node:crypto');
+const {ensureOutbidNotifications,deliverOutbids}=require('./outbidNotifications');
 const {ensureApprovalNotifications,deliverApprovals}=require('./registrationNotifications');
 const {createFirebaseSender} = require('./firebasePush');
 const tokenHash = token => crypto.createHash('sha256').update(token).digest('hex');
@@ -23,6 +24,7 @@ function createNotificationWorker(pool, {sender = createFirebaseSender(), log = 
         PRIMARY KEY (auction_id,token_hash), KEY push_ready (state,available_at)
       ) ENGINE=InnoDB`);
       await ensureApprovalNotifications(pool);
+      await ensureOutbidNotifications(pool);
     })().catch(error => { ensuring = null; throw error; });
     return ensuring;
   }
@@ -40,6 +42,7 @@ function createNotificationWorker(pool, {sender = createFirebaseSender(), log = 
   async function sweep() {
     if (!sender.configured()) return;
     await ensure();
+    await deliverOutbids(pool,sender,log);
     await deliverApprovals(pool,sender,log);
     // SQL uses the database UTC clock, matching auction bidding and closure.
     // One durable delivery per auction/device: repeated sweeps and re-auctions stay separate.

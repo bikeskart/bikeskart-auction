@@ -62,6 +62,26 @@
     }catch{console.warn('Approval alerts could not be registered; retrying.');}})().finally(()=>pendingPushRequest=null);
     return pendingPushRequest;
   }
+  async function checkAppUpdate(download=false){
+    const button=$('updateApp'),message=$('updateAppMsg');if(!button)return;
+    if(download)button.disabled=true;
+    try{
+      const data=await json(await fetch('/api/app-update',{cache:'no-store'}));
+      if(!data.available){if(download&&message)message.textContent='No app update is available yet.';return;}
+      const installed=Number(nativeDevice?.versionCode);
+      const current=Number.isSafeInteger(installed)&&installed>=data.versionCode;
+      button.textContent=current?'Check for app updates':'Update app — v'+data.versionName;
+      if(download){
+        if(current){if(message)message.textContent='Your app is up to date.';return;}
+        const url=new URL(data.downloadUrl);if(url.protocol!=='https:'||url.username||url.password)throw new Error('Update link unavailable');
+        if(message)message.textContent='Downloading the update. Open the APK and confirm installation on your phone.';
+        window.location.assign(url.href);
+      }
+    }catch{if(download&&message)message.textContent='Could not check for updates. Please try again.';}
+    finally{if(download)button.disabled=false;}
+  }
+  if($('updateApp'))$('updateApp').onclick=()=>checkAppUpdate(true);
+  if($('accountMenu'))$('accountMenu').addEventListener('toggle',()=>{if($('accountMenu').open)checkAppUpdate();});
   function registerPush(){
     if(!token||!currentUser||!['dealer','bidder'].includes(currentUser.role)||!nativeDevice?.token||loggingOut)return;
     if(registeringPush)return registeringPush;

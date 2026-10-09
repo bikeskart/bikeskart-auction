@@ -7,7 +7,7 @@ const {createAuctionModel}=require('../src/models/auctionModel');
 const NOW=Date.parse('2026-10-06T06:00:00Z');
 const request=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 function fixture(overrides={}) {
-  const state={auction:{id:1,bike_id:2,status:'open',starting_price:50000,min_increment:500,reserve_price:50000,highest_bid:null,highest_bidder_id:null,winner_id:null,bid_count:0,starts_at:new Date(NOW-1000).toISOString(),ends_at:new Date(NOW+60000).toISOString(),...overrides},bids:[],now:NOW,accounts:{3:{id:3,role:'dealer',is_active:1,is_verified:1},4:{id:4,role:'bidder',is_active:1,is_verified:1},9:{id:9,role:'admin',is_active:1,is_verified:1}},commits:0};
+  const state={auction:{id:1,bike_id:2,status:'open',starting_price:50000,min_increment:500,reserve_price:50000,highest_bid:null,highest_bidder_id:null,winner_id:null,bid_count:0,starts_at:new Date(NOW-1000).toISOString(),ends_at:new Date(NOW+60000).toISOString(),...overrides},bids:[],outbids:[],now:NOW,accounts:{3:{id:3,role:'dealer',is_active:1,is_verified:1},4:{id:4,role:'bidder',is_active:1,is_verified:1},9:{id:9,role:'admin',is_active:1,is_verified:1}},commits:0};
   let queue=Promise.resolve();
   async function acquire(){const before=queue;let release;queue=new Promise(resolve=>release=resolve);await before;return release;}
   const pool={async getConnection(){let release,snapshot;return {
@@ -19,6 +19,7 @@ function fixture(overrides={}) {
       if(sql.includes('FROM auctions a')&&sql.includes('FOR UPDATE'))return [[structuredClone(state.auction)]];
       if(sql.includes('FROM users'))return [[structuredClone(state.accounts[params[0]])]];
       if(sql.startsWith('SELECT id, auction_id, amount FROM auction_bids'))return [[...state.bids.filter(b=>b.bidder_id===params[0]&&b.request_id===params[1])]];
+      if(sql.startsWith('INSERT INTO dealer_outbid_events')){if(state.failOutbid)throw Error('Outbid queue failed');state.outbids.push({bidId:params[0],auctionId:params[1],userId:params[2]});return [{affectedRows:1}];}
       if(sql.startsWith('INSERT INTO auction_bids')){const id=state.bids.length+1;state.bids.push({id,auction_id:params[0],bidder_id:params[1],amount:params[2],request_id:params[3]});return [{insertId:id}];}
       if(sql.startsWith('UPDATE auctions SET highest_bid')){Object.assign(state.auction,{highest_bid:params[0],highest_bidder_id:params[1],bid_count:state.auction.bid_count+1});return [{affectedRows:1}];}
       if(sql.includes("SET status = 'closed'")){Object.assign(state.auction,{status:'closed',result:params[0],winner_id:params[1]});return [{affectedRows:1}];}
@@ -29,7 +30,7 @@ function fixture(overrides={}) {
       if(sql.startsWith('INSERT INTO auctions'))return [{insertId:2}];
       throw Error('Unexpected SQL in test: '+sql);
     }
-  };},async query(sql){if(sql.startsWith('SELECT id FROM auctions'))return [[state.auction.status==='open'&&new Date(state.auction.ends_at).getTime()<=state.now?{id:1}:undefined].filter(Boolean)];throw Error('Unexpected pool SQL');}};
+  };},async query(sql){if(sql.startsWith('CREATE TABLE'))return [[]];if(sql.startsWith('SELECT id FROM auctions'))return [[state.auction.status==='open'&&new Date(state.auction.ends_at).getTime()<=state.now?{id:1}:undefined].filter(Boolean)];throw Error('Unexpected pool SQL');}};
   return {model:createAuctionModel(pool),state};
 }
 test('whole rupees, explicit timezones and auction duration are validated',()=>{
@@ -82,10 +83,25 @@ test('duplicate active auctions and a bike with a winner cannot be rescheduled',
 });
 test('dealer auction responses hide reserve and other bidder identities',async()=>{
   const row={...fixture({status:'closed',result:'sold',highest_bid:55000,highest_bidder_id:3,winner_id:3}).state.auction,created_by:9,winner_name:'Private Name',winner_email:'private@example.com',leading_name:'Private Leader',leading_business:'Private Shop',active_bike_id:null};
-  const pool={async query(sql){if(sql.startsWith('SELECT id FROM auctions'))return [[]];if(sql.includes(' AS server_now'))return [[{server_now:new Date(NOW).toISOString()}]];if(sql.includes('COUNT(*)'))return [[{total:1}]];return [[structuredClone(row)]];}};
+  const pool={async query(sql){if(sql.startsWith('CREATE TABLE'))return [[]];if(sql.startsWith('SELECT id FROM auctions'))return [[]];if(sql.includes(' AS server_now'))return [[{server_now:new Date(NOW).toISOString()}]];if(sql.includes('COUNT(*)'))return [[{total:1}]];return [[structuredClone(row)]];}};
   const model=createAuctionModel(pool),dealer=(await model.list({id:3,role:'dealer'})).rows[0];
   for(const key of ['reserve_price','highest_bidder_id','winner_id','created_by','winner_name','winner_email','leading_name','leading_business','active_bike_id'])assert.ok(!(key in dealer),key);
   assert.equal(dealer.is_winner,true);assert.equal(dealer.is_leading,true);
   const admin=(await model.list({id:9,role:'admin'})).rows[0];assert.equal(admin.reserve_price,50000);assert.equal(admin.winner_email,'private@example.com');
 });
 test('auction readiness is checked inside the creation transaction and failures roll back',async()=>{const body={bikeId:2,startingPrice:50000,minIncrement:500,startsAt:new Date(NOW).toISOString(),endsAt:new Date(NOW+60000).toISOString()},f=fixture({status:'closed',result:'unsold'});let checked=false;await assert.rejects(()=>f.model.create(body,9,async(conn,id)=>{checked=!!conn.query&&id===2;throw Error('Main admin handover required');}),/handover required/);assert.equal(checked,true);assert.equal(f.state.commits,0);});
+
+test('only replacing another leader queues an outbid; replay and self-raises do not',async()=>{
+ const {model,state}=fixture();await model.bid(1,3,{amount:50000,requestId:request(1)});assert.equal(state.outbids.length,0);
+ await model.bid(1,3,{amount:50500,requestId:request(2)});assert.equal(state.outbids.length,0);
+ const body={amount:51000,requestId:request(3)};await model.bid(1,4,body);
+ assert.deepEqual(state.outbids,[{bidId:3,auctionId:1,userId:3}]);await model.bid(1,4,body);assert.equal(state.outbids.length,1);
+ await assert.rejects(model.bid(1,3,{amount:51000,requestId:request(4)}));assert.equal(state.outbids.length,1);
+ await model.bid(1,3,{amount:51500,requestId:request(5)});assert.equal(state.outbids[1].userId,4);
+});
+
+test('outbid event and replacement bid roll back together on a queue failure',async()=>{
+ const {model,state}=fixture();await model.bid(1,3,{amount:50000,requestId:request(1)});state.failOutbid=true;
+ await assert.rejects(model.bid(1,4,{amount:50500,requestId:request(2)}),/queue failed/);
+ assert.equal(state.bids.length,1);assert.equal(state.auction.highest_bidder_id,3);assert.equal(state.outbids.length,0);
+});
