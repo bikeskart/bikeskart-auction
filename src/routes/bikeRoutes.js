@@ -71,6 +71,7 @@ router.put("/:id", upload.fields([
   { name: "rcDocument", maxCount: 1 },
   { name: "deliveryPhoto", maxCount: 1 },
   { name: "saleReceipt", maxCount: 1 },
+  { name: "saleInvoice", maxCount: 1 },
 ]), validateBike, async (req, res, next) => {
   try {
     const bikeId = Number(req.params.id);
@@ -84,14 +85,14 @@ router.put("/:id", upload.fields([
     if (!allowedStatus.has(status)) return res.status(400).json({error:"Invalid bike status"});
     const photos=req.files?.bikePhotos||[]; const rc=req.files?.rcDocument?.[0];
     const sale=parseSale(req.body,existing.sale_profile);
-    if(!req.adminPermissions.includes('owner')&&(Object.keys(req.body).some(k=>['buyerName','buyerBusiness','buyerPhone','buyerEmail','saleDate','salePrice','paymentReceived','paymentMethod','paymentDate','paymentReference','deliveryDate'].includes(k))||req.files?.deliveryPhoto?.length||req.files?.saleReceipt?.length||req.files?.rcDocument?.length)){for(const files of Object.values(req.files||{}))for(const f of files)require('fs').unlink(f.path,()=>{});return res.status(403).json({error:'Only the main admin can change private sale, payment and delivery records'});}
+    if(!req.adminPermissions.includes('owner')&&(Object.keys(req.body).some(k=>['buyerName','buyerBusiness','buyerPhone','buyerEmail','saleDate','salePrice','paymentReceived','paymentMethod','paymentDate','paymentReference','deliveryDate'].includes(k))||req.files?.deliveryPhoto?.length||req.files?.saleReceipt?.length||req.files?.saleInvoice?.length||req.files?.rcDocument?.length)){for(const files of Object.values(req.files||{}))for(const f of files)require('fs').unlink(f.path,()=>{});return res.status(403).json({error:'Only the main admin can change private sale, payment and delivery records'});}
     const accountFields=['buyerName','buyerBusiness','buyerPhone','buyerEmail','saleDate','salePrice','paymentReceived','paymentMethod','paymentDate','paymentReference'];
     if(accountFields.some(k=>String(sale[k]??'')!==String(existing.sale_profile?.[k]??''))&&!req.adminPermissions.includes('accounts'))return res.status(403).json({error:'Accounts access required to change buyer or payment details'});
     if(['salePrice','paymentReceived','paymentMethod','paymentDate','paymentReference'].some(k=>String(sale[k]??'')!==String(existing.sale_profile?.[k]??'')))sale.paymentConfirmed=false;
     if(req.files?.saleReceipt?.length)sale.receiptSigned=false;
     const [[winning]]=await require('../config/db').query("SELECT highest_bid FROM auctions WHERE bike_id=? AND result='sold' ORDER BY id DESC LIMIT 1",[bikeId]);
     sale.documents=[...(existing.sale_profile?.documents||[])];
-    for(const kind of ['deliveryPhoto','saleReceipt']){const file=req.files?.[kind]?.[0];if(file)sale.documents.push({kind,filename:file.filename,uploadedAt:new Date().toISOString(),uploadedBy:String(req.user.sub)});}
+    for(const kind of ['deliveryPhoto','saleReceipt','saleInvoice']){const file=req.files?.[kind]?.[0];if(file)sale.documents.push({kind,filename:file.filename,uploadedAt:new Date().toISOString(),uploadedBy:String(req.user.sub)});}
     require("../utils/adminOperations").validateRelease(sale,winning?.highest_bid);
     await updateBike(bikeId,{brand,model,year,registration_number:String(req.body.registrationNumber||"").trim()||null,kilometers_driven:req.body.kilometersDriven===""?null:Number(req.body.kilometersDriven),ownership_count:req.body.ownershipCount===""?null:Number(req.body.ownershipCount),fuel_type:String(req.body.fuelType||"").trim()||null,condition_notes:String(req.body.conditionNotes||"").trim()||null,detail_profile:JSON.stringify(parseProfile(req.body,existing.detail_profile)),sale_profile:JSON.stringify(sale),status});
     await addBikeImages(bikeId,photos.map(f=>`/uploads/bikes/${f.filename}`));

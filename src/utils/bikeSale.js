@@ -21,7 +21,7 @@ function parseSale(body,existing={}){
  }
  return sale;
 }
-function readSale(raw){try{const data=typeof raw==='string'?JSON.parse(raw):raw||{};const sale=require("./adminOperations").parseOperations(data,parseSale(data));sale.documents=Array.isArray(data.documents)?data.documents.filter(d=>['deliveryPhoto','saleReceipt'].includes(d.kind)&&/^\d+-[a-f0-9]{16}\.(jpg|png|webp|pdf)$/.test(d.filename)):[];return sale;}catch{return {};}}
+function readSale(raw){try{const data=typeof raw==='string'?JSON.parse(raw):raw||{};const sale=require("./adminOperations").parseOperations(data,parseSale(data));sale.documents=Array.isArray(data.documents)?data.documents.filter(d=>['deliveryPhoto','saleReceipt','saleInvoice'].includes(d.kind)&&/^\d+-[a-f0-9]{16}\.(jpg|png|webp|pdf)$/.test(d.filename)):[];return sale;}catch{return {};}}
 async function ensureSale(pool){
  if(pending.has(pool))return pending.get(pool);
  const work=(async()=>{const [rows]=await pool.query('SHOW COLUMNS FROM bikes');if(!rows.some(r=>r.Field==='sale_profile'))try{await pool.query('ALTER TABLE bikes ADD COLUMN sale_profile LONGTEXT NULL');}catch(e){if(e.code!=='ER_DUP_FIELDNAME')throw e;}})();
