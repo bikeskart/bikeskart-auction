@@ -48,7 +48,7 @@ router.get('/assignments',inspectorAuth,async(req,res,next)=>{
   res.json({assignments:rows});
  }catch(e){next(e);}
 });
-router.post('/admin/accounts',requireAuth,requireAdminScope(),async(req,res,next)=>{
+router.post('/admin/accounts',requireAuth,requireAdminScope('accounts'),async(req,res,next)=>{
  try{
   const fullName=String(req.body?.fullName||'').trim();
   const email=String(req.body?.email||'').trim().toLowerCase();
@@ -60,7 +60,7 @@ router.post('/admin/accounts',requireAuth,requireAdminScope(),async(req,res,next
   res.status(201).json({id:result.insertId,fullName,email});
  }catch(e){if(e.code==='ER_DUP_ENTRY')return res.status(409).json({error:'Email already registered'});next(e);}
 });
-router.post('/admin/assignments',requireAuth,requireAdminScope(),async(req,res,next)=>{
+router.post('/admin/assignments',requireAuth,requireAdminScope('accounts'),async(req,res,next)=>{
  try{
   const inspectorId=Number(req.body?.inspectorId),bikeId=Number(req.body?.bikeId);
   if(!Number.isSafeInteger(inspectorId)||inspectorId<1||!Number.isSafeInteger(bikeId)||bikeId<1)return res.status(400).json({error:'Valid inspectorId and bikeId required'});
