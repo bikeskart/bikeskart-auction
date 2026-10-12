@@ -1,0 +1,46 @@
+name: Android Play Store AAB
+on:
+  workflow_dispatch:
+jobs:
+  build-aab:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Verify required signing and Firebase secrets
+        env:
+          KEYSTORE_B64: ${{ secrets.BK_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.BK_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.BK_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.BK_KEY_PASSWORD }}
+          FIREBASE_JSON_B64: ${{ secrets.BK_GOOGLE_SERVICES_BASE64 }}
+        run: |
+          for key in KEYSTORE_B64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD FIREBASE_JSON_B64; do
+            if [ -z "${!key}" ]; then echo "::error::Missing secret: $key"; exit 1; fi
+          done
+          mkdir -p "$RUNNER_TEMP/bikeskart-signing"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/bikeskart-signing/upload.jks"
+          printf '%s' "$FIREBASE_JSON_B64" | base64 --decode > android/app/google-services.json
+          chmod 600 "$RUNNER_TEMP/bikeskart-signing/upload.jks"
+          echo "BK_RELEASE_KEYSTORE=$RUNNER_TEMP/bikeskart-signing/upload.jks" >> "$GITHUB_ENV"
+      - name: Build signed release AAB
+        working-directory: android
+        env:
+          BK_KEYSTORE_PASSWORD: ${{ secrets.BK_KEYSTORE_PASSWORD }}
+          BK_KEY_ALIAS: ${{ secrets.BK_KEY_ALIAS }}
+          BK_KEY_PASSWORD: ${{ secrets.BK_KEY_PASSWORD }}
+        run: gradle --no-daemon bundleRelease
+      - name: Upload Play Store bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: BikesKart-Auction-Play-Store-AAB
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+          retention-days: 14
