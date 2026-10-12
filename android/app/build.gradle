@@ -3,7 +3,7 @@ android {
  namespace 'com.bikeskart.auction'
  buildFeatures { buildConfig true }
  compileSdk 36
- defaultConfig { applicationId 'com.bikeskart.auction'; minSdk 24; targetSdk 36; versionCode 6; versionName '1.5' }
+ defaultConfig { applicationId 'com.bikeskart.auction'; minSdk 24; targetSdk 36; versionCode 7; versionName '1.5' }
  compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
  signingConfigs {
    release {
