@@ -35,6 +35,19 @@ test('only public frontend assets are served', async () => {
   for (const url of ['/','/admin.html','/style.css','/app.js','/admin.js']) assert.equal((await fetch(base+url)).status,200,url);
   for (const url of ['/server.js','/package.json','/database/schema.sql','/src/config/env.js','/api/unknown']) assert.equal((await fetch(base+url)).status,404,url);
 });
+test('homepage policy allows BikesKart images while retaining other restrictions', async () => {
+  const res = await fetch(base + '/');
+  const policy = res.headers.get('content-security-policy');
+  assert.ok(policy);
+  const directives = Object.fromEntries(policy.split(';').filter(Boolean).map(part => {
+    const [name, ...values] = part.trim().split(/\s+/);
+    return [name, values];
+  }));
+  assert.deepEqual(directives['img-src'], ["'self'", 'data:', 'https://bikeskart.com']);
+  assert.deepEqual(directives['default-src'], ["'self'"]);
+  assert.deepEqual(directives['object-src'], ["'none'"]);
+  assert.ok(!directives['script-src'].includes('https://bikeskart.com'));
+});
 test('RC documents require an admin access token',async () => {
   assert.equal((await fetch(base+'/uploads/rc/regression.pdf')).status,404);
   assert.equal((await fetch(base+'/api/admin/bikes/1/rc')).status,401);
