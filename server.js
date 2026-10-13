@@ -17,7 +17,13 @@ const app = express();
 app.set("trust proxy", require("./src/utils/trustProxy").trustProxyHops(env.nodeEnv, process.env.TRUST_PROXY_HOPS));
 
 const { uploadRoot } = require("./src/middleware/upload");
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      imgSrc: ["'self'", "data:", "https://bikeskart.com"],
+    },
+  },
+}));
 
 app.use(
   cors({
