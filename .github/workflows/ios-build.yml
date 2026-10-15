@@ -1,0 +1,37 @@
+name: iPhone simulator build
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-build.yml'
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install project generator
+        run: brew install xcodegen
+      - name: Prepare existing BikesKart icon and generate project
+        working-directory: ios
+        run: |
+          python3 prepare_assets.py
+          xcodegen generate
+      - name: Build iPhone simulator app without signing
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild -project BikesKartAuction.xcodeproj -scheme BikesKartAuction \
+            -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: BikesKart-iPhone-Simulator
+          path: ios/build/Build/Products/Debug-iphonesimulator/BikesKartAuction.app
+          if-no-files-found: error
+          retention-days: 7
