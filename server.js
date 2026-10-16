@@ -46,6 +46,7 @@ app.use(express.urlencoded({ extended: true }));
  */
 app.get("/api/app-update",(req,res)=>{res.set("Cache-Control","no-store");res.json(require("./src/utils/appUpdate").appUpdate());});
 app.use("/api/auth", authRoutes);
+app.use("/api/inspector", require("./src/routes/inspectorRoutes"));
 app.use("/api/admin-registration", require("./src/routes/adminRegistrationRoutes"));
 
 /*

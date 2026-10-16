@@ -1,0 +1,20 @@
+const {test,before,after}=require('node:test');
+const assert=require('node:assert/strict');
+Object.assign(process.env,{DB_HOST:'unused',DB_USER:'unused',DB_PASSWORD:'unused',DB_NAME:'unused',JWT_SECRET:'inspector-test-secret',NODE_ENV:'test'});
+let active=true;
+const pool={query:async(sql,p=[])=>{
+ if(sql.includes('FROM inspector_accounts WHERE email='))return [[{id:10,full_name:'Inspector One',email:'inspector@example.com',password_hash:require('bcryptjs').hashSync('long-test-password',4),is_active:active?1:0}]];
+ if(sql.includes('FROM inspector_accounts WHERE id=?'))return [[{id:10,full_name:'Inspector One',email:'inspector@example.com',is_active:active?1:0}]];
+ if(sql.includes('FROM inspector_assignments a'))return [[{id:4,bikeId:9,status:'assigned',brand:'Honda',model:'Activa'}]];
+ throw Error('Unexpected SQL: '+sql);
+}};
+const dbPath=require.resolve('../src/config/db');require.cache[dbPath]={id:dbPath,filename:dbPath,loaded:true,exports:pool};
+let server,base;
+before(async()=>{const app=require('express')();app.use(require('express').json());app.use('/api/inspector',require('../src/routes/inspectorRoutes'));app.use((e,req,res,next)=>res.status(500).json({error:e.message}));server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));base='http://127.0.0.1:'+server.address().port;});
+after(()=>new Promise(r=>server.close(r)));
+const login=(email,password)=>fetch(base+'/api/inspector/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+test('inspector dashboard rejects unauthenticated access',async()=>{assert.equal((await fetch(base+'/api/inspector/assignments')).status,401);});
+test('inspector login rejects incorrect password',async()=>{assert.equal((await login('inspector@example.com','incorrect-password')).status,401);});
+test('valid inspector can access only assigned bikes',async()=>{const r=await login('inspector@example.com','long-test-password');assert.equal(r.status,200);const body=await r.json();const headers={Authorization:'Bearer '+body.accessToken};const me=await fetch(base+'/api/inspector/me',{headers});assert.equal(me.status,200);const assignments=await (await fetch(base+'/api/inspector/assignments',{headers})).json();assert.equal(assignments.assignments.length,1);assert.equal(assignments.assignments[0].bikeId,9);});
+test('disabled inspector cannot log in',async()=>{active=false;assert.equal((await login('inspector@example.com','long-test-password')).status,401);active=true;});
+test('inspector JWT cannot create admin-managed accounts',async()=>{const r=await login('inspector@example.com','long-test-password');const {accessToken}=await r.json();const denied=await fetch(base+'/api/inspector/admin/accounts',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({fullName:'Other',email:'other@example.com',password:'long-test-password'})});assert.equal(denied.status,401);});
